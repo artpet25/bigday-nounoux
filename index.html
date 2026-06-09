@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mariage des Nounous</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#c4963a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff;--surface:#ffffff;--surface2:#f5f5f7;--surface3:#ebebed;
+  --border:rgba(0,0,0,0.08);--border-h:rgba(0,0,0,0.16);
+  --accent:#c4963a;--accent-dim:rgba(196,150,58,0.1);--accent-glow:rgba(196,150,58,0.22);
+  --text:#1a1a1a;--muted:#888888;--muted2:#aaaaaa;
+  --green:#27ae60;--green-dim:rgba(39,174,96,0.1);
+  --red:#e74c3c;--red-dim:rgba(231,76,60,0.1);
+  --blue:#2980b9;--blue-dim:rgba(41,128,185,0.1);
+  --purple:#8e44ad;--purple-dim:rgba(142,68,173,0.1);
+  --radius:14px;--radius-sm:9px;--radius-lg:22px;
+  --shadow:0 2px 16px rgba(0,0,0,0.08);
+  --transition:.2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom);}
+
+/* ── HEADER ── */
+.header{padding:16px 20px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;}
+.header-top{display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.header-title span{color:var(--accent);}
+.countdown{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;font-family:'DM Sans',sans-serif;transition:color var(--transition);}
+.nav-btn.active{color:var(--accent);font-weight:600;}
+.nav-icon{font-size:22px;line-height:1;}
+
+/* ── SECTIONS ── */
+.section{display:none;padding:12px 16px 100px;}
+.section.active{display:block;}
+
+/* ── STATS BAR ── */
+.stats-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+.stat-chip{background:var(--surface2);border-radius:10px;padding:10px 14px;text-align:center;flex-shrink:0;}
+.stat-num{font-size:20px;font-weight:700;color:var(--accent);}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* ── FILTER ROW ── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.filter-row::-webkit-scrollbar{display:none;}
+.ftab{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all var(--transition);}
+.ftab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.fsel{padding:6px 10px;border-radius:20px;font-size:13px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;flex-shrink:0;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--radius);padding:14px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:border-color var(--transition);}
+.card:active{border-color:var(--accent);}
+.card-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.card-name{font-size:15px;font-weight:600;letter-spacing:-.2px;}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.card-notes{font-size:12px;color:var(--muted2);margin-top:6px;line-height:1.4;}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;}
+.tag-confirmé{background:var(--green-dim);color:var(--green);}
+.tag-décliné{background:var(--red-dim);color:var(--red);}
+.tag-invité{background:var(--accent-dim);color:var(--accent);}
+.tag-mariée{background:#fce4ec;color:#c2185b;}
+.tag-marié{background:#e3f2fd;color:#1565c0;}
+.tag-commun{background:var(--surface2);color:var(--muted);}
+.tag-famille{background:var(--purple-dim);color:var(--purple);}
+.tag-amis{background:var(--blue-dim);color:var(--blue);}
+.tag-fait{background:var(--green-dim);color:var(--green);}
+.tag-àfaire{background:var(--accent-dim);color:var(--accent);}
+.tag-encours{background:var(--blue-dim);color:var(--blue);}
+.tag-payé{background:var(--green-dim);color:var(--green);}
+.tag-acompte{background:var(--blue-dim);color:var(--blue);}
+.tag-devis{background:var(--accent-dim);color:var(--accent);}
+.tag-prévu{background:var(--surface2);color:var(--muted);}
+.tag-haute{background:var(--red-dim);color:var(--red);}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-big{font-size:48px;margin-bottom:12px;}
+
+/* ── BUDGET CARD ── */
+.budget-totals{background:var(--accent-dim);border-radius:var(--radius);padding:16px;margin-bottom:14px;border:1px solid rgba(196,150,58,0.2);}
+.budget-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.budget-total-label{font-size:13px;color:var(--muted);}
+.budget-total-val{font-size:22px;font-weight:700;color:var(--accent);}
+.budget-progress{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.budget-progress-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease;}
+.budget-amounts{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;}
+.card-amounts{display:flex;gap:12px;margin-top:8px;}
+.amount-block{text-align:right;}
+.amount-label{font-size:10px;color:var(--muted);}
+.amount-val{font-size:14px;font-weight:600;}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:78px;right:20px;width:54px;height:54px;border-radius:16px;background:var(--accent);color:#fff;font-size:26px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px var(--accent-glow);z-index:20;transition:transform var(--transition);}
+.fab:active{transform:scale(.93);}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none;align-items:flex-end;backdrop-filter:blur(6px);}
+.overlay.open{display:flex;}
+.modal{width:100%;max-height:92vh;background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:16px 20px env(safe-area-inset-bottom);overflow-y:auto;animation:slideUp .28s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:2px;margin:0 auto 16px;}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:16px;}
+.field{margin-bottom:14px;}
+.field label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;}
+.field input,.field select,.field textarea{width:100%;padding:11px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color var(--transition);}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field textarea{resize:none;height:72px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.btn-row{display:flex;gap:8px;margin-top:6px;}
+.btn-primary{flex:1;padding:13px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-secondary{flex:1;padding:13px;border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-size:15px;font-weight:500;border:1.5px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-danger{padding:13px 18px;border-radius:var(--radius-sm);background:var(--red-dim);color:var(--red);font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* ── CHECKBOX TOGGLE ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);}
+.toggle-label{font-size:15px;color:var(--text);}
+.toggle{width:44px;height:26px;background:var(--surface3);border-radius:13px;border:none;cursor:pointer;position:relative;transition:background var(--transition);}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform var(--transition);}
+.toggle.on::after{transform:translateX(18px);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">💍 <span>Mariage</span> des Nounous</div>
+      <div class="countdown" id="countdown"></div>
+    </div>
+    <div style="font-size:9px;color:var(--muted2);">v1</div>
+  </div>
+</div>
+
+<!-- SECTIONS -->
+<div class="section active" id="section-guests">
+  <div class="stats-bar" id="guests-stats"></div>
+  <div class="filter-row">
+    <div class="ftab active" onclick="guestFilter('tous',this)">Tous</div>
+    <div class="ftab" onclick="guestFilter('confirmé',this)">✅ Confirmés</div>
+    <div class="ftab" onclick="guestFilter('invité',this)">💌 En attente</div>
+    <div class="ftab" onclick="guestFilter('décliné',this)">❌ Déclinés</div>
+    <select class="fsel" id="g-cote-filter" onchange="renderGuests()"><option value="">Côté…</option><option>mariée</option><option>marié</option><option>commun</option></select>
+    <select class="fsel" id="g-cat-filter" onchange="renderGuests()"><option value="">Catégorie…</option><option>famille</option><option>amis</option><option>collègues</option><option>autre</option></select>
+  </div>
+  <div id="guests-list"></div>
+</div>
+
+<div class="section" id="section-tasks">
+  <div class="stats-bar" id="tasks-stats"></div>
+  <div class="filter-row">
+    <div class="ftab active" onclick="taskFilter('tous',this)">Toutes</div>
+    <div class="ftab" onclick="taskFilter('à faire',this)">🔲 À faire</div>
+    <div class="ftab" onclick="taskFilter('en cours',this)">⏳ En cours</div>
+    <div class="ftab" onclick="taskFilter('fait',this)">✅ Faites</div>
+    <select class="fsel" id="t-cat-filter" onchange="renderTasks()"><option value="">Catégorie…</option></select>
+  </div>
+  <div id="tasks-list"></div>
+</div>
+
+<div class="section" id="section-budget">
+  <div class="budget-totals" id="budget-totals"></div>
+  <div class="filter-row">
+    <div class="ftab active" onclick="budgetFilter('tous',this)">Tout</div>
+    <div class="ftab" onclick="budgetFilter('prévu',this)">📋 Prévu</div>
+    <div class="ftab" onclick="budgetFilter('devis',this)">📄 Devis</div>
+    <div class="ftab" onclick="budgetFilter('acompte',this)">💳 Acompte</div>
+    <div class="ftab" onclick="budgetFilter('payé',this)">✅ Payé</div>
+    <select class="fsel" id="b-cat-filter" onchange="renderBudget()"><option value="">Catégorie…</option></select>
+  </div>
+  <div id="budget-list"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-guests" onclick="goTo('guests')">
+    <span class="nav-icon">👥</span>Invités
+  </button>
+  <button class="nav-btn" id="nav-tasks" onclick="goTo('tasks')">
+    <span class="nav-icon">✅</span>Tâches
+  </button>
+  <button class="nav-btn" id="nav-budget" onclick="goTo('budget')">
+    <span class="nav-icon">💰</span>Budget
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openAdd()">＋</button>
+
+<!-- GUEST MODAL -->
+<div class="overlay" id="guest-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="guest-modal-title">Ajouter un invité</h2>
+    <div class="two-col">
+      <div class="field"><label>Prénom *</label><input id="g-prenom" type="text"></div>
+      <div class="field"><label>Nom</label><input id="g-nom" type="text"></div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Côté</label>
+        <select id="g-cote"><option value="commun">Commun</option><option value="mariée">Mariée</option><option value="marié">Marié</option></select>
+      </div>
+      <div class="field"><label>Catégorie</label>
+        <select id="g-cat"><option value="amis">Amis</option><option value="famille">Famille</option><option value="collègues">Collègues</option><option value="autre">Autre</option></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Statut</label>
+        <select id="g-statut"><option value="invité">💌 Invité</option><option value="confirmé">✅ Confirmé</option><option value="décliné">❌ Décliné</option></select>
+      </div>
+      <div class="field"><label>Repas</label>
+        <select id="g-repas"><option value="normal">Normal</option><option value="végétarien">Végétarien</option><option value="enfant">Enfant</option><option value="sans">Sans repas</option></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>N° Table</label><input id="g-table" type="number" placeholder="—"></div>
+      <div class="field"><label>Hébergement</label>
+        <div class="toggle-row" style="margin-top:0">
+          <span class="toggle-label">Nuit sur place</span>
+          <button class="toggle" id="g-heberg" onclick="toggleHeberg()"></button>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="g-notes" placeholder="Régime, info…"></textarea></div>
+    <div class="btn-row">
+      <button class="btn-danger" id="g-del-btn" style="display:none" onclick="deleteGuest()">🗑</button>
+      <button class="btn-secondary" onclick="closeGuestModal()">Annuler</button>
+      <button class="btn-primary" onclick="saveGuest()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="overlay" id="task-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="task-modal-title">Ajouter une tâche</h2>
+    <div class="field"><label>Titre *</label><input id="t-titre" type="text"></div>
+    <div class="two-col">
+      <div class="field"><label>Catégorie</label>
+        <select id="t-cat"><option value="">—</option><option>Lieu</option><option>Traiteur</option><option>Tenue</option><option>Fleurs</option><option>Photo</option><option>Musique</option><option>Papeterie</option><option>Voyage</option><option>Autre</option></select>
+      </div>
+      <div class="field"><label>Priorité</label>
+        <select id="t-prio"><option value="1">🔴 Haute</option><option value="2" selected>🟡 Normale</option><option value="3">🟢 Basse</option></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Statut</label>
+        <select id="t-statut"><option value="à faire">🔲 À faire</option><option value="en cours">⏳ En cours</option><option value="fait">✅ Fait</option></select>
+      </div>
+      <div class="field"><label>Deadline</label><input id="t-deadline" type="date"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="t-notes" placeholder="Détails…"></textarea></div>
+    <div class="btn-row">
+      <button class="btn-danger" id="t-del-btn" style="display:none" onclick="deleteTask()">🗑</button>
+      <button class="btn-secondary" onclick="closeTaskModal()">Annuler</button>
+      <button class="btn-primary" onclick="saveTask()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET MODAL -->
+<div class="overlay" id="budget-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="budget-modal-title">Ajouter une dépense</h2>
+    <div class="field"><label>Description *</label><input id="b-desc" type="text" placeholder="Ex: Photographe"></div>
+    <div class="field"><label>Catégorie</label>
+      <select id="b-cat"><option value="">—</option><option>Lieu</option><option>Traiteur</option><option>Tenue</option><option>Fleurs</option><option>Photo</option><option>Musique</option><option>Papeterie</option><option>Voyage & Lune de miel</option><option>Autre</option></select>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Montant prévu (€)</label><input id="b-prevu" type="number" placeholder="0"></div>
+      <div class="field"><label>Montant réel (€)</label><input id="b-reel" type="number" placeholder="0"></div>
+    </div>
+    <div class="field"><label>Statut</label>
+      <select id="b-statut"><option value="prévu">📋 Prévu</option><option value="devis">📄 Devis reçu</option><option value="acompte">💳 Acompte versé</option><option value="payé">✅ Payé</option></select>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="b-notes" placeholder="Contact, infos…"></textarea></div>
+    <div class="btn-row">
+      <button class="btn-danger" id="b-del-btn" style="display:none" onclick="deleteBudget()">🗑</button>
+      <button class="btn-secondary" onclick="closeBudgetModal()">Annuler</button>
+      <button class="btn-primary" onclick="saveBudget()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SUPABASE ───────────────────────────────────────────────────
+const SUPABASE_URL = 'REMPLACER_PAR_VOTRE_URL';
+const SUPABASE_KEY = 'REMPLACER_PAR_VOTRE_CLE';
+let sb = null;
+try { if (window.supabase) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+
+async function sbFetch(table) {
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.from(table).select('*');
+    if (error) throw error;
+    return data;
+  } catch(e) { console.warn('[sb] fetch', table, e); return null; }
+}
+async function sbUpsert(table, row) {
+  if (!sb) return;
+  try { await sb.from(table).upsert(row); } catch(e) { console.warn('[sb] upsert', e); }
+}
+async function sbDelete(table, id) {
+  if (!sb) return;
+  try { await sb.from(table).delete().eq('id', id); } catch(e) { console.warn('[sb] del', e); }
+}
+
+// ── STORAGE ────────────────────────────────────────────────────
+const SK = 'mariage_v1';
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(SK) || 'null'); } catch(e) { return null; }
+}
+function saveState() {
+  localStorage.setItem(SK, JSON.stringify({ guests, tasks, budget }));
+}
+let stored = loadState() || {};
+let guests = (stored.guests || []).filter(x => x && x.id && x.prenom);
+let tasks  = (stored.tasks  || []).filter(x => x && x.id && x.titre);
+let budget = (stored.budget || []).filter(x => x && x.id && x.description);
+
+// ── COUNTDOWN ─────────────────────────────────────────────────
+const WEDDING_DATE = '2026-09-12'; // ← modifier cette date
+function updateCountdown() {
+  const d = new Date(WEDDING_DATE);
+  const now = new Date();
+  const diff = Math.ceil((d - now) / 86400000);
+  const el = document.getElementById('countdown');
+  if (!el) return;
+  if (diff > 0) el.textContent = `💒 J-${diff} — ${d.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+  else if (diff === 0) el.textContent = '💒 C\'est aujourd\'hui ! 🎉';
+  else el.textContent = `💒 Mariés depuis ${Math.abs(diff)} jours ❤️`;
+}
+updateCountdown();
+
+// ── NAVIGATION ────────────────────────────────────────────────
+let currentSection = 'guests';
+function goTo(name) {
+  currentSection = name;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'guests') renderGuests();
+  else if (name === 'tasks') renderTasks();
+  else renderBudget();
+}
+function openAdd() {
+  if (currentSection === 'guests') openGuestModal();
+  else if (currentSection === 'tasks') openTaskModal();
+  else openBudgetModal();
+}
+
+// ── ID ─────────────────────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ────────────────────────────────────────────────────────────────
+// INVITÉS
+// ────────────────────────────────────────────────────────────────
+let gFilter = 'tous';
+function guestFilter(f, el) {
+  gFilter = f;
+  document.querySelectorAll('#section-guests .ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderGuests();
+}
+function renderGuests() {
+  const cote = document.getElementById('g-cote-filter').value;
+  const cat  = document.getElementById('g-cat-filter').value;
+  let list = guests.filter(g => {
+    if (gFilter !== 'tous' && g.statut !== gFilter) return false;
+    if (cote && g.cote !== cote) return false;
+    if (cat  && g.categorie !== cat) return false;
+    return true;
+  });
+  // Stats
+  const total = guests.length;
+  const conf  = guests.filter(g => g.statut === 'confirmé').length;
+  const decl  = guests.filter(g => g.statut === 'décliné').length;
+  const att   = guests.filter(g => g.statut === 'invité').length;
+  const enf   = guests.filter(g => g.repas === 'enfant').length;
+  document.getElementById('guests-stats').innerHTML = `
+    <div class="stat-chip"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-chip"><div class="stat-num" style="color:var(--green)">${conf}</div><div class="stat-lbl">Confirmés</div></div>
+    <div class="stat-chip"><div class="stat-num" style="color:var(--accent)">${att}</div><div class="stat-lbl">En attente</div></div>
+    <div class="stat-chip"><div class="stat-num" style="color:var(--red)">${decl}</div><div class="stat-lbl">Déclinés</div></div>
+    ${enf?`<div class="stat-chip"><div class="stat-num">${enf}</div><div class="stat-lbl">Enfants</div></div>`:''}
+  `;
+  const el = document.getElementById('guests-list');
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="empty-big">👥</div><p>Aucun invité. Appuie sur + !</p></div>`; return; }
+  el.innerHTML = list.map(g => `
+    <div class="card" onclick="editGuest('${g.id}')">
+      <div class="card-row">
+        <div>
+          <div class="card-name">${g.prenom} ${g.nom}</div>
+          <div class="card-sub">${g.categorie}${g.table_num ? ' · Table ' + g.table_num : ''}${g.hebergement ? ' · 🏨' : ''}</div>
+        </div>
+        <span class="tag tag-${g.statut}">${g.statut === 'confirmé' ? '✅' : g.statut === 'décliné' ? '❌' : '💌'} ${g.statut}</span>
+      </div>
+      <div class="tags">
+        <span class="tag tag-${g.cote}">${g.cote}</span>
+        ${g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
+        ${g.notes ? `<span class="tag tag-invité">📝</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+let editingGuestId = null;
+let hebergOn = false;
+function toggleHeberg() { hebergOn = !hebergOn; document.getElementById('g-heberg').classList.toggle('on', hebergOn); }
+function openGuestModal(id = null) {
+  editingGuestId = id;
+  const g = id ? guests.find(x => x.id === id) : null;
+  document.getElementById('guest-modal-title').textContent = id ? 'Modifier l\'invité' : 'Ajouter un invité';
+  document.getElementById('g-prenom').value = g?.prenom || '';
+  document.getElementById('g-nom').value = g?.nom || '';
+  document.getElementById('g-cote').value = g?.cote || 'commun';
+  document.getElementById('g-cat').value = g?.categorie || 'amis';
+  document.getElementById('g-statut').value = g?.statut || 'invité';
+  document.getElementById('g-repas').value = g?.repas || 'normal';
+  document.getElementById('g-table').value = g?.table_num || '';
+  document.getElementById('g-notes').value = g?.notes || '';
+  hebergOn = g?.hebergement || false;
+  document.getElementById('g-heberg').classList.toggle('on', hebergOn);
+  document.getElementById('g-del-btn').style.display = id ? 'block' : 'none';
+  document.getElementById('guest-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('g-prenom').focus(), 100);
+}
+function closeGuestModal() { document.getElementById('guest-overlay').classList.remove('open'); }
+function saveGuest() {
+  const prenom = document.getElementById('g-prenom').value.trim();
+  if (!prenom) { alert('Le prénom est requis'); return; }
+  const g = {
+    id: editingGuestId || uid(),
+    prenom,
+    nom:         document.getElementById('g-nom').value.trim(),
+    cote:        document.getElementById('g-cote').value,
+    categorie:   document.getElementById('g-cat').value,
+    statut:      document.getElementById('g-statut').value,
+    repas:       document.getElementById('g-repas').value,
+    table_num:   parseInt(document.getElementById('g-table').value) || null,
+    hebergement: hebergOn,
+    notes:       document.getElementById('g-notes').value.trim(),
+  };
+  if (editingGuestId) guests = guests.map(x => x.id === editingGuestId ? g : x);
+  else guests.unshift(g);
+  saveState(); sbUpsert('guests', g); renderGuests(); closeGuestModal();
+}
+function editGuest(id) { openGuestModal(id); }
+function deleteGuest() {
+  if (!confirm('Supprimer cet invité ?')) return;
+  guests = guests.filter(x => x.id !== editingGuestId);
+  saveState(); sbDelete('guests', editingGuestId); renderGuests(); closeGuestModal();
+}
+
+// ────────────────────────────────────────────────────────────────
+// TÂCHES
+// ────────────────────────────────────────────────────────────────
+let tFilter = 'tous';
+function taskFilter(f, el) {
+  tFilter = f;
+  document.querySelectorAll('#section-tasks .ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+function renderTasks() {
+  const cat = document.getElementById('t-cat-filter').value;
+  const allCats = [...new Set(tasks.map(t => t.categorie).filter(Boolean))].sort();
+  const tsel = document.getElementById('t-cat-filter');
+  const tval = tsel.value;
+  tsel.innerHTML = '<option value="">Catégorie…</option>' + allCats.map(c => `<option${c===tval?' selected':''}>${c}</option>`).join('');
+
+  let list = tasks.filter(t => {
+    if (tFilter !== 'tous' && t.statut !== tFilter) return false;
+    if (cat && t.categorie !== cat) return false;
+    return true;
+  }).sort((a, b) => (a.priorite||2) - (b.priorite||2));
+
+  const total = tasks.length;
+  const fait  = tasks.filter(t => t.statut === 'fait').length;
+  const encours = tasks.filter(t => t.statut === 'en cours').length;
+  const haute = tasks.filter(t => t.priorite == 1 && t.statut !== 'fait').length;
+  document.getElementById('tasks-stats').innerHTML = `
+    <div class="stat-chip"><div class="stat-num">${fait}/${total}</div><div class="stat-lbl">Faites</div></div>
+    <div class="stat-chip"><div class="stat-num" style="color:var(--blue)">${encours}</div><div class="stat-lbl">En cours</div></div>
+    ${haute ? `<div class="stat-chip"><div class="stat-num" style="color:var(--red)">${haute}</div><div class="stat-lbl">Urgentes</div></div>` : ''}
+  `;
+  const el = document.getElementById('tasks-list');
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="empty-big">✅</div><p>Aucune tâche. Appuie sur + !</p></div>`; return; }
+  el.innerHTML = list.map(t => {
+    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('fr-FR', {day:'numeric',month:'short'}) : '';
+    const tagStatut = t.statut === 'fait' ? 'fait' : t.statut === 'en cours' ? 'encours' : 'àfaire';
+    return `<div class="card" onclick="editTask('${t.id}')" style="${t.statut==='fait'?'opacity:.6':''}">
+      <div class="card-row">
+        <div style="flex:1">
+          <div class="card-name" style="${t.statut==='fait'?'text-decoration:line-through':''}">${t.titre}</div>
+          <div class="card-sub">${t.categorie || ''}${dl ? ' · 📅 ' + dl : ''}</div>
+        </div>
+        <span class="tag tag-${tagStatut}">${t.statut}</span>
+      </div>
+      ${t.priorite == 1 ? '<div class="tags"><span class="tag tag-haute">🔴 Urgent</span></div>' : ''}
+      ${t.notes ? `<div class="card-notes">${t.notes}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+let editingTaskId = null;
+function openTaskModal(id = null) {
+  editingTaskId = id;
+  const t = id ? tasks.find(x => x.id === id) : null;
+  document.getElementById('task-modal-title').textContent = id ? 'Modifier la tâche' : 'Ajouter une tâche';
+  document.getElementById('t-titre').value = t?.titre || '';
+  document.getElementById('t-cat').value = t?.categorie || '';
+  document.getElementById('t-prio').value = t?.priorite ?? 2;
+  document.getElementById('t-statut').value = t?.statut || 'à faire';
+  document.getElementById('t-deadline').value = t?.deadline || '';
+  document.getElementById('t-notes').value = t?.notes || '';
+  document.getElementById('t-del-btn').style.display = id ? 'block' : 'none';
+  document.getElementById('task-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('t-titre').focus(), 100);
+}
+function closeTaskModal() { document.getElementById('task-overlay').classList.remove('open'); }
+function saveTask() {
+  const titre = document.getElementById('t-titre').value.trim();
+  if (!titre) { alert('Le titre est requis'); return; }
+  const t = {
+    id:         editingTaskId || uid(),
+    titre,
+    categorie:  document.getElementById('t-cat').value,
+    priorite:   parseInt(document.getElementById('t-prio').value),
+    statut:     document.getElementById('t-statut').value,
+    deadline:   document.getElementById('t-deadline').value,
+    notes:      document.getElementById('t-notes').value.trim(),
+  };
+  if (editingTaskId) tasks = tasks.map(x => x.id === editingTaskId ? t : x);
+  else tasks.unshift(t);
+  saveState(); sbUpsert('wedding_tasks', t); renderTasks(); closeTaskModal();
+}
+function editTask(id) { openTaskModal(id); }
+function deleteTask() {
+  if (!confirm('Supprimer cette tâche ?')) return;
+  tasks = tasks.filter(x => x.id !== editingTaskId);
+  saveState(); sbDelete('wedding_tasks', editingTaskId); renderTasks(); closeTaskModal();
+}
+
+// ────────────────────────────────────────────────────────────────
+// BUDGET
+// ────────────────────────────────────────────────────────────────
+let bFilter = 'tous';
+function budgetFilter(f, el) {
+  bFilter = f;
+  document.querySelectorAll('#section-budget .ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBudget();
+}
+function renderBudget() {
+  const cat = document.getElementById('b-cat-filter').value;
+  const allCats = [...new Set(budget.map(b => b.categorie).filter(Boolean))].sort();
+  const bsel = document.getElementById('b-cat-filter');
+  const bval = bsel.value;
+  bsel.innerHTML = '<option value="">Catégorie…</option>' + allCats.map(c => `<option${c===bval?' selected':''}>${c}</option>`).join('');
+
+  let list = budget.filter(b => {
+    if (bFilter !== 'tous' && b.statut !== bFilter) return false;
+    if (cat && b.categorie !== cat) return false;
+    return true;
+  });
+
+  const totalPrevu = budget.reduce((s, b) => s + (parseFloat(b.montant_prevu) || 0), 0);
+  const totalReel  = budget.reduce((s, b) => s + (parseFloat(b.montant_reel) || 0), 0);
+  const pct = totalPrevu > 0 ? Math.min(100, (totalReel / totalPrevu) * 100) : 0;
+  const fmt = n => n.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' €';
+  document.getElementById('budget-totals').innerHTML = `
+    <div class="budget-total-row">
+      <div><div class="budget-total-label">Budget prévu</div><div class="budget-total-val">${fmt(totalPrevu)}</div></div>
+      <div style="text-align:right"><div class="budget-total-label">Dépensé réel</div><div class="budget-total-val">${fmt(totalReel)}</div></div>
+    </div>
+    <div class="budget-progress"><div class="budget-progress-bar" style="width:${pct}%"></div></div>
+    <div class="budget-amounts"><span>${Math.round(pct)}% consommé</span><span>${fmt(totalPrevu - totalReel)} restant</span></div>
+  `;
+  const el = document.getElementById('budget-list');
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="empty-big">💰</div><p>Aucune dépense. Appuie sur + !</p></div>`; return; }
+  el.innerHTML = list.map(b => {
+    const tagStatut = b.statut.replace(' ','');
+    return `<div class="card" onclick="editBudget('${b.id}')">
+      <div class="card-row">
+        <div style="flex:1">
+          <div class="card-name">${b.description}</div>
+          <div class="card-sub">${b.categorie || ''}</div>
+        </div>
+        <span class="tag tag-${tagStatut}">${b.statut}</span>
+      </div>
+      <div class="card-amounts">
+        <div class="amount-block"><div class="amount-label">Prévu</div><div class="amount-val">${fmt(parseFloat(b.montant_prevu)||0)}</div></div>
+        <div class="amount-block"><div class="amount-label">Réel</div><div class="amount-val" style="color:${(parseFloat(b.montant_reel)||0)>(parseFloat(b.montant_prevu)||0)?'var(--red)':'var(--green)'}">${fmt(parseFloat(b.montant_reel)||0)}</div></div>
+      </div>
+      ${b.notes ? `<div class="card-notes">${b.notes}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+let editingBudgetId = null;
+function openBudgetModal(id = null) {
+  editingBudgetId = id;
+  const b = id ? budget.find(x => x.id === id) : null;
+  document.getElementById('budget-modal-title').textContent = id ? 'Modifier la dépense' : 'Ajouter une dépense';
+  document.getElementById('b-desc').value = b?.description || '';
+  document.getElementById('b-cat').value = b?.categorie || '';
+  document.getElementById('b-prevu').value = b?.montant_prevu || '';
+  document.getElementById('b-reel').value = b?.montant_reel || '';
+  document.getElementById('b-statut').value = b?.statut || 'prévu';
+  document.getElementById('b-notes').value = b?.notes || '';
+  document.getElementById('b-del-btn').style.display = id ? 'block' : 'none';
+  document.getElementById('budget-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('b-desc').focus(), 100);
+}
+function closeBudgetModal() { document.getElementById('budget-overlay').classList.remove('open'); }
+function saveBudget() {
+  const description = document.getElementById('b-desc').value.trim();
+  if (!description) { alert('La description est requise'); return; }
+  const b = {
+    id:            editingBudgetId || uid(),
+    description,
+    categorie:     document.getElementById('b-cat').value,
+    montant_prevu: parseFloat(document.getElementById('b-prevu').value) || 0,
+    montant_reel:  parseFloat(document.getElementById('b-reel').value) || 0,
+    statut:        document.getElementById('b-statut').value,
+    notes:         document.getElementById('b-notes').value.trim(),
+  };
+  if (editingBudgetId) budget = budget.map(x => x.id === editingBudgetId ? b : x);
+  else budget.unshift(b);
+  saveState(); sbUpsert('budget_items', b); renderBudget(); closeBudgetModal();
+}
+function editBudget(id) { openBudgetModal(id); }
+function deleteBudget() {
+  if (!confirm('Supprimer cette dépense ?')) return;
+  budget = budget.filter(x => x.id !== editingBudgetId);
+  saveState(); sbDelete('budget_items', editingBudgetId); renderBudget(); closeBudgetModal();
+}
+
+// ── CLOSE MODALS ON BG ────────────────────────────────────────
+['guest-overlay','task-overlay','budget-overlay'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) document.getElementById(id).classList.remove('open'); });
+});
+
+// ── INITIAL RENDER ────────────────────────────────────────────
+renderGuests();
+
+// ── CLOUD SYNC ────────────────────────────────────────────────
+(async () => {
+  if (!sb) return;
+  const [cloudGuests, cloudTasks, cloudBudget] = await Promise.all([
+    sbFetch('guests'), sbFetch('wedding_tasks'), sbFetch('budget_items')
+  ]);
+  let changed = false;
+  if (cloudGuests?.length) {
+    const valid = cloudGuests.filter(g => g && g.id && g.prenom);
+    if (valid.length) { guests = valid; changed = true; }
+  } else if (cloudGuests !== null && guests.length) {
+    await Promise.all(guests.map(g => sbUpsert('guests', g)));
+  }
+  if (cloudTasks?.length) {
+    const valid = cloudTasks.filter(t => t && t.id && t.titre);
+    if (valid.length) { tasks = valid; changed = true; }
+  } else if (cloudTasks !== null && tasks.length) {
+    await Promise.all(tasks.map(t => sbUpsert('wedding_tasks', t)));
+  }
+  if (cloudBudget?.length) {
+    const valid = cloudBudget.filter(b => b && b.id && b.description);
+    if (valid.length) { budget = valid; changed = true; }
+  } else if (cloudBudget !== null && budget.length) {
+    await Promise.all(budget.map(b => sbUpsert('budget_items', b)));
+  }
+  if (changed) { saveState(); renderGuests(); renderTasks(); renderBudget(); }
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) window.location.reload();
+          });
+        });
+      });
+  });
+}
+</script>
+</body>
+</html>
