@@ -73,12 +73,12 @@ body {
 .header-inner { display: flex; align-items: center; justify-content: space-between; }
 .header-brand { display: flex; align-items: center; gap: 10px; }
 .header-icon {
-  width: 40px; height: 40px;
-  background: var(--text);
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), #e8698a);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  flex-shrink: 0;
+  font-size: 18px;
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 .countdown-eglise { background: rgba(139,92,246,0.12); color: var(--purple); }
 .header-title { font-size: 17px; font-weight: 700; letter-spacing: -.4px; color: var(--text); }
@@ -467,6 +467,13 @@ body {
 
 /* ── DIVIDER ── */
 .divider { height: 1px; background: var(--border); margin: 6px 0 14px; }
+
+/* ── STACKED ICON (Save the date) ── */
+.icon-stack { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height:1; }
+.icon-stack .icon-badge { position: absolute; bottom: -3px; right: -5px; font-size: 9px; line-height: 1; }
+
+/* ── CATEGORY TAG ── */
+.tag-cat { background: var(--gold-dim); color: var(--gold); }
 </style>
 </head>
 <body>
@@ -475,17 +482,7 @@ body {
 <div class="header">
   <div class="header-inner">
     <div class="header-brand">
-      <div class="header-icon">
-        <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Alliance classique (Nounou) -->
-          <ellipse cx="9.5" cy="13" rx="7" ry="4.5" stroke="white" stroke-width="2" fill="none"/>
-          <!-- Alliance avec diamants (Nounette) -->
-          <ellipse cx="17" cy="13" rx="7" ry="4.5" stroke="white" stroke-width="2" fill="none"/>
-          <!-- Diamant -->
-          <polygon points="17,2 19.5,5.5 17,9 14.5,5.5" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-          <line x1="14.5" y1="5.5" x2="19.5" y2="5.5" stroke="white" stroke-width="1.2"/>
-        </svg>
-      </div>
+      <div class="header-icon">💍</div>
       <div>
         <div class="header-title"><span>Mariage</span> des Nounous</div>
       </div>
@@ -508,7 +505,7 @@ body {
     <div class="ftab" onclick="guestFilter('save the date',this)">✉️ STD</div>
     <select class="fsel" id="g-cote-filter" onchange="renderGuests()">
       <option value="">Côté…</option>
-      <option value="nounou">🤵🏽 Nounou</option>
+      <option value="nounou">🤵🏻 Nounou</option>
       <option value="nounette">👰🏼 Nounette</option>
       <option value="commun">Commun</option>
     </select>
@@ -570,7 +567,7 @@ body {
       <div class="field"><label>Prénom &amp; Nom *</label><input id="g-prenom" type="text" autocomplete="off" placeholder="Prénom Nom"></div>
       <div class="field"><label>Côté</label>
         <select id="g-cote">
-          <option value="nounou">🤵🏽 Nounou</option>
+          <option value="nounou">🤵🏻 Nounou</option>
           <option value="nounette">👰🏼 Nounette</option>
           <option value="commun">🤝 Commun</option>
         </select>
@@ -810,20 +807,29 @@ function renderGuests() {
     return;
   }
   el.innerHTML = list.map(g => {
-    const statutIcon = g.statut === 'oui' ? '✅' : g.statut === 'non' ? '❌' : g.statut === 'peut-être' ? '❓' : g.statut === 'save the date confirmé' ? '✉️✅' : '✉️❌';
-    const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : g.statut === 'save the date confirmé' ? 'savedatedone' : 'savethedate';
-    const coteIcon = g.cote === 'nounou' ? '🤵🏽' : g.cote === 'nounette' ? '👰🏼' : '🤝';
+    const isSTD = g.statut && g.statut.startsWith('save the date');
+    const isSTDConf = g.statut === 'save the date confirmé';
+    let statutIcon;
+    if (g.statut === 'oui') statutIcon = '✅';
+    else if (g.statut === 'non') statutIcon = '❌';
+    else if (g.statut === 'peut-être') statutIcon = '❓';
+    else if (isSTD) statutIcon = `<span class="icon-stack">✉️<span class="icon-badge">${isSTDConf ? '✅' : '❌'}</span></span>`;
+    else statutIcon = '💌';
+    const statutLabel = isSTDConf ? 'STD confirmé' : isSTD ? 'Save the date' : g.statut;
+    const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : isSTDConf ? 'savedatedone' : isSTD ? 'savethedate' : 'invité';
+    const coteIcon = g.cote === 'nounou' ? '🤵🏻' : g.cote === 'nounette' ? '👰🏼' : '🤝';
     const coteClass = g.cote === 'nounou' ? 'nounou' : g.cote === 'nounette' ? 'nounette' : 'commun';
     return `<div class="card" onclick="editGuest('${g.id}')">
       <div class="card-row">
         <div>
           <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
-          <div class="card-sub">${g.categorie || ''}${g.table_num ? ' · Table ' + g.table_num : ''}${g.couchage ? ' · ' + g.couchage : ''}</div>
+          <div class="card-sub">${g.table_num ? 'Table ' + g.table_num : ''}${g.couchage ? (g.table_num ? ' · ' : '') + g.couchage : ''}</div>
         </div>
-        <span class="tag tag-${statutClass}">${statutIcon} ${g.statut}</span>
+        <span class="tag tag-${statutClass}" style="display:inline-flex;align-items:center;gap:3px">${statutIcon} ${statutLabel}</span>
       </div>
       <div class="tags">
         <span class="tag tag-${coteClass}">${coteIcon} ${g.cote}</span>
+        ${g.categorie ? `<span class="tag tag-cat">🏷️ ${g.categorie}</span>` : ''}
         ${g.repas && g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
         ${g.notes ? `<span class="tag tag-invité">📝</span>` : ''}
       </div>
