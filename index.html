@@ -73,13 +73,14 @@ body {
 .header-inner { display: flex; align-items: center; justify-content: space-between; }
 .header-brand { display: flex; align-items: center; gap: 10px; }
 .header-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--accent), #e8698a);
+  width: 40px; height: 40px;
+  background: var(--text);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 4px 12px var(--accent-glow);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  flex-shrink: 0;
 }
+.countdown-eglise { background: rgba(139,92,246,0.12); color: var(--purple); }
 .header-title { font-size: 17px; font-weight: 700; letter-spacing: -.4px; color: var(--text); }
 .header-title span { color: var(--accent); }
 .countdown-badge {
@@ -243,9 +244,16 @@ body {
 .tag-confirmé { background: var(--green-dim); color: var(--green); }
 .tag-décliné { background: var(--red-dim); color: var(--red); }
 .tag-invité { background: var(--accent-dim); color: var(--accent); }
+.tag-oui { background: var(--green-dim); color: var(--green); }
+.tag-non { background: var(--red-dim); color: var(--red); }
+.tag-peut-être { background: rgba(245,158,11,0.12); color: #b45309; }
+.tag-savethedate { background: var(--accent-dim); color: var(--accent); }
+.tag-savedatedone { background: var(--green-dim); color: var(--green); }
+.tag-nounette { background: #fce4ec; color: #c2185b; }
+.tag-nounou { background: #e3f2fd; color: #1565c0; }
+.tag-commun { background: var(--surface2); color: var(--muted); }
 .tag-mariée { background: #fce4ec; color: #c2185b; }
 .tag-marié { background: #e3f2fd; color: #1565c0; }
-.tag-commun { background: var(--surface2); color: var(--muted); }
 .tag-famille { background: var(--purple-dim); color: var(--purple); }
 .tag-amis { background: var(--blue-dim); color: var(--blue); }
 .tag-fait { background: var(--green-dim); color: var(--green); }
@@ -467,12 +475,25 @@ body {
 <div class="header">
   <div class="header-inner">
     <div class="header-brand">
-      <div class="header-icon">💍</div>
+      <div class="header-icon">
+        <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Alliance classique (Nounou) -->
+          <ellipse cx="9.5" cy="13" rx="7" ry="4.5" stroke="white" stroke-width="2" fill="none"/>
+          <!-- Alliance avec diamants (Nounette) -->
+          <ellipse cx="17" cy="13" rx="7" ry="4.5" stroke="white" stroke-width="2" fill="none"/>
+          <!-- Diamant -->
+          <polygon points="17,2 19.5,5.5 17,9 14.5,5.5" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+          <line x1="14.5" y1="5.5" x2="19.5" y2="5.5" stroke="white" stroke-width="1.2"/>
+        </svg>
+      </div>
       <div>
         <div class="header-title"><span>Mariage</span> des Nounous</div>
       </div>
     </div>
-    <div class="countdown-badge" id="countdown"></div>
+    <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+      <div class="countdown-badge" id="countdown-mairie"></div>
+      <div class="countdown-badge countdown-eglise" id="countdown-eglise"></div>
+    </div>
   </div>
 </div>
 
@@ -481,16 +502,19 @@ body {
   <div class="stats-row" id="guests-stats"></div>
   <div class="filter-scroll">
     <div class="ftab active" onclick="guestFilter('tous',this)">Tous</div>
-    <div class="ftab" onclick="guestFilter('confirmé',this)">✅ Confirmés</div>
-    <div class="ftab" onclick="guestFilter('invité',this)">💌 En attente</div>
-    <div class="ftab" onclick="guestFilter('décliné',this)">❌ Déclinés</div>
+    <div class="ftab" onclick="guestFilter('oui',this)">✅ Oui</div>
+    <div class="ftab" onclick="guestFilter('peut-être',this)">❓ Peut-être</div>
+    <div class="ftab" onclick="guestFilter('non',this)">❌ Non</div>
+    <div class="ftab" onclick="guestFilter('save the date',this)">✉️ STD</div>
     <select class="fsel" id="g-cote-filter" onchange="renderGuests()">
       <option value="">Côté…</option>
-      <option>mariée</option><option>marié</option><option>commun</option>
+      <option value="nounou">🤵🏽 Nounou</option>
+      <option value="nounette">👰🏼 Nounette</option>
+      <option value="commun">Commun</option>
     </select>
     <select class="fsel" id="g-cat-filter" onchange="renderGuests()">
       <option value="">Catégorie…</option>
-      <option>famille</option><option>amis</option><option>collègues</option><option>autre</option>
+      <option>Amis</option><option>Foot</option><option>Collègues</option><option>One Point</option><option>Autre</option>
     </select>
   </div>
   <div id="guests-list"></div>
@@ -543,53 +567,52 @@ body {
     <div class="modal-handle"></div>
     <h2 id="guest-modal-title">Ajouter un invité</h2>
     <div class="two-col">
-      <div class="field"><label>Prénom *</label><input id="g-prenom" type="text" autocomplete="off"></div>
-      <div class="field"><label>Nom</label><input id="g-nom" type="text" autocomplete="off"></div>
-    </div>
-    <div class="two-col">
+      <div class="field"><label>Prénom &amp; Nom *</label><input id="g-prenom" type="text" autocomplete="off" placeholder="Prénom Nom"></div>
       <div class="field"><label>Côté</label>
         <select id="g-cote">
-          <option value="commun">Commun</option>
-          <option value="mariée">Mariée</option>
-          <option value="marié">Marié</option>
-        </select>
-      </div>
-      <div class="field"><label>Catégorie</label>
-        <select id="g-cat">
-          <option value="amis">Amis</option>
-          <option value="famille">Famille</option>
-          <option value="collègues">Collègues</option>
-          <option value="autre">Autre</option>
+          <option value="nounou">🤵🏽 Nounou</option>
+          <option value="nounette">👰🏼 Nounette</option>
+          <option value="commun">🤝 Commun</option>
         </select>
       </div>
     </div>
     <div class="two-col">
+      <div class="field"><label>Catégorie</label>
+        <input id="g-cat" list="g-cat-list" autocomplete="off" placeholder="Amis, Foot…">
+        <datalist id="g-cat-list">
+          <option value="Amis"><option value="Foot"><option value="Collègues"><option value="One Point"><option value="Autre">
+        </datalist>
+      </div>
       <div class="field"><label>Statut</label>
         <select id="g-statut">
-          <option value="invité">💌 Invité</option>
-          <option value="confirmé">✅ Confirmé</option>
-          <option value="décliné">❌ Décliné</option>
-        </select>
-      </div>
-      <div class="field"><label>Repas</label>
-        <select id="g-repas">
-          <option value="normal">Normal</option>
-          <option value="végétarien">Végétarien</option>
-          <option value="enfant">Enfant</option>
-          <option value="sans">Sans repas</option>
+          <option value="save the date">✉️❌ Save the date</option>
+          <option value="save the date confirmé">✉️✅ STD confirmé</option>
+          <option value="peut-être">❓ Peut-être</option>
+          <option value="oui">✅ Oui</option>
+          <option value="non">❌ Non</option>
         </select>
       </div>
     </div>
     <div class="two-col">
-      <div class="field"><label>N° Table</label><input id="g-table" type="number" placeholder="—"></div>
-      <div class="field"><label>Hébergement</label>
-        <div class="toggle-row">
-          <span class="toggle-label">Nuit sur place</span>
-          <button class="toggle" id="g-heberg" onclick="toggleHeberg()"></button>
-        </div>
+      <div class="field"><label>Repas</label>
+        <select id="g-repas">
+          <option value="normal">🍽️ Normal</option>
+          <option value="autre">🥗 Autre</option>
+          <option value="sans">🚫 Sans repas</option>
+        </select>
+      </div>
+      <div class="field"><label>Couchage</label>
+        <select id="g-couchage">
+          <option value="">— Aucun —</option>
+          <option value="château">🏰 Château</option>
+          <option value="gîte">🏡 Gîte</option>
+          <option value="dortoire">🛏️ Dortoire</option>
+          <option value="solution perso">🏠 Solution perso</option>
+        </select>
       </div>
     </div>
-    <div class="field"><label>Notes</label><textarea id="g-notes" placeholder="Régime, infos…"></textarea></div>
+    <div class="field"><label>N° Table</label><input id="g-table" type="number" placeholder="—"></div>
+    <div class="field"><label>Notes</label><textarea id="g-notes" placeholder="Infos complémentaires…"></textarea></div>
     <div class="divider"></div>
     <div class="btn-row">
       <button class="btn-danger" id="g-del-btn" style="display:none" onclick="deleteGuest()">🗑</button>
@@ -716,15 +739,16 @@ let tasks  = (stored.tasks  || []).filter(x => x && x.id && x.titre);
 let budget = (stored.budget || []).filter(x => x && x.id && x.description);
 
 // ── COUNTDOWN ────────────────────────────────────────────────────
-const WEDDING_DATE = '2026-09-12';
 function updateCountdown() {
-  const d = new Date(WEDDING_DATE);
-  const diff = Math.ceil((d - new Date()) / 86400000);
-  const el = document.getElementById('countdown');
-  if (!el) return;
-  if (diff > 0) el.textContent = `J-${diff}`;
-  else if (diff === 0) el.textContent = `Aujourd'hui 🎉`;
-  else el.textContent = `Mariés ❤️`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const mairie = new Date('2026-09-12');
+  const eglise = new Date('2027-05-01');
+  const diffM = Math.ceil((mairie - today) / 86400000);
+  const diffE = Math.ceil((eglise - today) / 86400000);
+  const em = document.getElementById('countdown-mairie');
+  const ee = document.getElementById('countdown-eglise');
+  if (em) em.innerHTML = diffM > 0 ? `🏛️ J-${diffM}` : diffM === 0 ? `🏛️ Aujourd'hui 🎉` : `🏛️ Mariés ❤️`;
+  if (ee) ee.innerHTML = diffE > 0 ? `⛪ J-${diffE}` : diffE === 0 ? `⛪ Aujourd'hui 🎉` : `⛪ Mariés ❤️`;
 }
 updateCountdown();
 
@@ -761,83 +785,87 @@ function renderGuests() {
   const cote = document.getElementById('g-cote-filter').value;
   const cat  = document.getElementById('g-cat-filter').value;
   let list = guests.filter(g => {
-    if (gFilter !== 'tous' && g.statut !== gFilter) return false;
+    if (gFilter !== 'tous') {
+      if (gFilter === 'save the date') {
+        if (!g.statut || !g.statut.startsWith('save the date')) return false;
+      } else if (g.statut !== gFilter) return false;
+    }
     if (cote && g.cote !== cote) return false;
     if (cat  && g.categorie !== cat) return false;
     return true;
   });
   const total = guests.length;
-  const conf  = guests.filter(g => g.statut === 'confirmé').length;
-  const decl  = guests.filter(g => g.statut === 'décliné').length;
-  const att   = guests.filter(g => g.statut === 'invité').length;
+  const oui   = guests.filter(g => g.statut === 'oui').length;
+  const non   = guests.filter(g => g.statut === 'non').length;
+  const std   = guests.filter(g => g.statut && g.statut.startsWith('save the date')).length;
   document.getElementById('guests-stats').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${conf}</div><div class="stat-lbl">Confirmés</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${att}</div><div class="stat-lbl">En attente</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${decl}</div><div class="stat-lbl">Déclinés</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${std}</div><div class="stat-lbl">STD ✉️</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
   `;
   const el = document.getElementById('guests-list');
   if (!list.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">👥</div><p>Aucun invité. Appuie sur +&nbsp;!</p></div>`;
     return;
   }
-  el.innerHTML = list.map(g => `
-    <div class="card" onclick="editGuest('${g.id}')">
+  el.innerHTML = list.map(g => {
+    const statutIcon = g.statut === 'oui' ? '✅' : g.statut === 'non' ? '❌' : g.statut === 'peut-être' ? '❓' : g.statut === 'save the date confirmé' ? '✉️✅' : '✉️❌';
+    const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : g.statut === 'save the date confirmé' ? 'savedatedone' : 'savethedate';
+    const coteIcon = g.cote === 'nounou' ? '🤵🏽' : g.cote === 'nounette' ? '👰🏼' : '🤝';
+    const coteClass = g.cote === 'nounou' ? 'nounou' : g.cote === 'nounette' ? 'nounette' : 'commun';
+    return `<div class="card" onclick="editGuest('${g.id}')">
       <div class="card-row">
         <div>
-          <div class="card-name">${g.prenom} ${g.nom}</div>
-          <div class="card-sub">${g.categorie}${g.table_num ? ' · Table ' + g.table_num : ''}${g.hebergement ? ' · 🏨' : ''}</div>
+          <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
+          <div class="card-sub">${g.categorie || ''}${g.table_num ? ' · Table ' + g.table_num : ''}${g.couchage ? ' · ' + g.couchage : ''}</div>
         </div>
-        <span class="tag tag-${g.statut}">${g.statut === 'confirmé' ? '✅' : g.statut === 'décliné' ? '❌' : '💌'} ${g.statut}</span>
+        <span class="tag tag-${statutClass}">${statutIcon} ${g.statut}</span>
       </div>
       <div class="tags">
-        <span class="tag tag-${g.cote}">${g.cote}</span>
-        ${g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
+        <span class="tag tag-${coteClass}">${coteIcon} ${g.cote}</span>
+        ${g.repas && g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
         ${g.notes ? `<span class="tag tag-invité">📝</span>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 let editingGuestId = null;
-let hebergOn = false;
-function toggleHeberg() {
-  hebergOn = !hebergOn;
-  document.getElementById('g-heberg').classList.toggle('on', hebergOn);
-}
 function openGuestModal(id = null) {
   editingGuestId = id;
   const g = id ? guests.find(x => x.id === id) : null;
   document.getElementById('guest-modal-title').textContent = id ? 'Modifier l\'invité' : 'Ajouter un invité';
-  document.getElementById('g-prenom').value = g?.prenom || '';
-  document.getElementById('g-nom').value = g?.nom || '';
-  document.getElementById('g-cote').value = g?.cote || 'commun';
-  document.getElementById('g-cat').value = g?.categorie || 'amis';
-  document.getElementById('g-statut').value = g?.statut || 'invité';
+  document.getElementById('g-prenom').value = g ? (g.prenom + (g.nom ? ' ' + g.nom : '')) : '';
+  document.getElementById('g-cote').value = g?.cote || 'nounou';
+  document.getElementById('g-cat').value = g?.categorie || '';
+  document.getElementById('g-statut').value = g?.statut || 'save the date';
   document.getElementById('g-repas').value = g?.repas || 'normal';
+  document.getElementById('g-couchage').value = g?.couchage || '';
   document.getElementById('g-table').value = g?.table_num || '';
   document.getElementById('g-notes').value = g?.notes || '';
-  hebergOn = g?.hebergement || false;
-  document.getElementById('g-heberg').classList.toggle('on', hebergOn);
   document.getElementById('g-del-btn').style.display = id ? 'block' : 'none';
   document.getElementById('guest-overlay').classList.add('open');
   setTimeout(() => document.getElementById('g-prenom').focus(), 100);
 }
 function closeGuestModal() { document.getElementById('guest-overlay').classList.remove('open'); }
 function saveGuest() {
-  const prenom = document.getElementById('g-prenom').value.trim();
-  if (!prenom) { alert('Le prénom est requis'); return; }
+  const fullName = document.getElementById('g-prenom').value.trim();
+  if (!fullName) { alert('Le prénom & nom est requis'); return; }
+  const parts = fullName.split(' ');
+  const prenom = parts[0];
+  const nom = parts.slice(1).join(' ');
   const g = {
     id: editingGuestId || uid(),
     prenom,
-    nom:         document.getElementById('g-nom').value.trim(),
-    cote:        document.getElementById('g-cote').value,
-    categorie:   document.getElementById('g-cat').value,
-    statut:      document.getElementById('g-statut').value,
-    repas:       document.getElementById('g-repas').value,
-    table_num:   parseInt(document.getElementById('g-table').value) || null,
-    hebergement: hebergOn,
-    notes:       document.getElementById('g-notes').value.trim(),
+    nom,
+    cote:     document.getElementById('g-cote').value,
+    categorie: document.getElementById('g-cat').value,
+    statut:   document.getElementById('g-statut').value,
+    repas:    document.getElementById('g-repas').value,
+    couchage: document.getElementById('g-couchage').value,
+    table_num: parseInt(document.getElementById('g-table').value) || null,
+    notes:    document.getElementById('g-notes').value.trim(),
   };
   if (editingGuestId) guests = guests.map(x => x.id === editingGuestId ? g : x);
   else guests.unshift(g);
