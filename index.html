@@ -469,8 +469,10 @@ body {
 .divider { height: 1px; background: var(--border); margin: 6px 0 14px; }
 
 /* ── STACKED ICON (Save the date) ── */
-.icon-stack { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height:1; }
-.icon-stack .icon-badge { position: absolute; bottom: -3px; right: -5px; font-size: 9px; line-height: 1; }
+.icon-stack { position: relative; display: inline-block; width: 1.4em; height: 1.1em; vertical-align: middle; }
+.icon-stack .icon-badge { position: absolute; bottom: -5px; right: -8px; font-size: 12px; font-weight: 900; line-height: 1; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
+.icon-badge-red  { color: #d94f3d; }
+.icon-badge-green { color: #2d9b6f; }
 
 /* ── CATEGORY TAG ── */
 .tag-cat { background: var(--gold-dim); color: var(--gold); }
@@ -813,7 +815,7 @@ function renderGuests() {
     if (g.statut === 'oui') statutIcon = '✅';
     else if (g.statut === 'non') statutIcon = '❌';
     else if (g.statut === 'peut-être') statutIcon = '❓';
-    else if (isSTD) statutIcon = `<span class="icon-stack">✉️<span class="icon-badge">${isSTDConf ? '✅' : '❌'}</span></span>`;
+    else if (isSTD) statutIcon = `<span class="icon-stack">✉️<span class="icon-badge ${isSTDConf ? 'icon-badge-green' : 'icon-badge-red'}">${isSTDConf ? '✓' : '✕'}</span></span>`;
     else statutIcon = '💌';
     const statutLabel = isSTDConf ? 'STD confirmé' : isSTD ? 'Save the date' : g.statut;
     const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : isSTDConf ? 'savedatedone' : isSTD ? 'savethedate' : 'invité';
