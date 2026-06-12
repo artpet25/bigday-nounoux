@@ -472,6 +472,52 @@ body {
 .tag-cat { background: var(--gold-dim); color: var(--gold); }
 .tag-std-envoyé  { background: rgba(245,158,11,0.12); color: #b45309; border: 1.5px solid #f59e0b; }
 .tag-std-confirmé { background: var(--green-dim); color: var(--green); border: 1.5px solid var(--green); }
+
+/* ── LOGIN ── */
+.login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 24px;
+}
+.login-title { font-size: 52px; font-weight: 800; letter-spacing: -2px; color: var(--text); margin-bottom: 6px; }
+.login-sub { font-size: 16px; color: var(--muted); margin-bottom: 48px; font-weight: 500; }
+.user-btns { display: flex; gap: 20px; }
+.user-btn {
+  flex: 1; min-width: 130px;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px 20px;
+  cursor: pointer; transition: all var(--t);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  box-shadow: var(--shadow);
+  font-family: 'Inter', sans-serif;
+}
+.user-btn:active { transform: scale(.96); border-color: var(--accent); }
+.user-btn .u-avatar { font-size: 40px; line-height: 1; }
+.user-btn .u-name { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+
+/* ── USER CHIP ── */
+.user-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent-dim); color: var(--accent);
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 20px; cursor: pointer;
+  border: none; font-family: 'Inter', sans-serif;
+}
+
+/* ── ACTIVITY LOG ── */
+.act-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 12px 16px; border: 1px solid var(--border);
+  margin-bottom: 8px; box-shadow: var(--shadow-sm);
+}
+.act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.act-user { font-size: 12px; font-weight: 700; }
+.act-user.nounou { color: #1565c0; }
+.act-user.nounette { color: #c2185b; }
+.act-time { font-size: 11px; color: var(--muted); }
+.act-action { font-size: 13px; color: var(--text2); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -488,7 +534,25 @@ body {
     <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
       <div class="countdown-badge" id="countdown-mairie"></div>
       <div class="countdown-badge countdown-eglise" id="countdown-eglise"></div>
+      <button class="user-chip" id="user-chip" onclick="showLogin()"></button>
     </div>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div style="font-size:52px;margin-bottom:12px">💍</div>
+  <div class="login-title">Big Day</div>
+  <div class="login-sub">Qui prend les commandes ?</div>
+  <div class="user-btns">
+    <button class="user-btn" onclick="selectUser('Nounou')">
+      <span class="u-avatar">🤵🏻</span>
+      <span class="u-name">Nounou</span>
+    </button>
+    <button class="user-btn" onclick="selectUser('Nounette')">
+      <span class="u-avatar">👰🏼</span>
+      <span class="u-name">Nounette</span>
+    </button>
   </div>
 </div>
 
@@ -539,6 +603,14 @@ body {
   <div id="budget-list"></div>
 </div>
 
+<div class="section" id="section-activity">
+  <div class="section-header">
+    <div class="section-title">Activité</div>
+    <button onclick="clearActivity()" style="font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer">Effacer</button>
+  </div>
+  <div id="activity-list"></div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-guests" onclick="goTo('guests')">
@@ -549,6 +621,9 @@ body {
   </button>
   <button class="nav-btn" id="nav-budget" onclick="goTo('budget')">
     <span class="nav-icon">💰</span>Budget
+  </button>
+  <button class="nav-btn" id="nav-activity" onclick="goTo('activity')">
+    <span class="nav-icon">📋</span>Activité
   </button>
 </nav>
 
@@ -581,7 +656,7 @@ body {
           <option value="Autre">Autre</option>
         </select>
       </div>
-      <div class="field"><label>Statut</label>
+      <div class="field"><label>Invitation</label>
         <select id="g-statut">
           <option value="peut-être">❓ Peut-être</option>
           <option value="oui">✅ Oui</option>
@@ -736,12 +811,13 @@ function loadState() {
   try { return JSON.parse(localStorage.getItem(SK) || 'null'); } catch(e) { return null; }
 }
 function saveState() {
-  localStorage.setItem(SK, JSON.stringify({ guests, tasks, budget }));
+  localStorage.setItem(SK, JSON.stringify({ guests, tasks, budget, actLog }));
 }
 let stored = loadState() || {};
 let guests = (stored.guests || []).filter(x => x && x.id && x.prenom);
 let tasks  = (stored.tasks  || []).filter(x => x && x.id && x.titre);
 let budget = (stored.budget || []).filter(x => x && x.id && x.description);
+let actLog = stored.actLog || [];
 
 // ── COUNTDOWN ────────────────────────────────────────────────────
 function updateCountdown() {
@@ -752,7 +828,7 @@ function updateCountdown() {
   const diffE = Math.ceil((eglise - today) / 86400000);
   const em = document.getElementById('countdown-mairie');
   const ee = document.getElementById('countdown-eglise');
-  if (em) em.innerHTML = diffM > 0 ? `⚜️ J-${diffM}` : diffM === 0 ? `⚜️ Aujourd'hui 🎉` : `⚜️ Mariés ❤️`;
+  if (em) em.innerHTML = diffM > 0 ? `💍 J-${diffM}` : diffM === 0 ? `💍 Aujourd'hui 🎉` : `💍 Mariés ❤️`;
   if (ee) ee.innerHTML = diffE > 0 ? `⛪ J-${diffE}` : diffE === 0 ? `⛪ Aujourd'hui 🎉` : `⛪ Mariés ❤️`;
 }
 updateCountdown();
@@ -767,7 +843,8 @@ function goTo(name) {
   document.getElementById('nav-' + name).classList.add('active');
   if (name === 'guests') renderGuests();
   else if (name === 'tasks') renderTasks();
-  else renderBudget();
+  else if (name === 'budget') renderBudget();
+  else renderActivity();
 }
 function openAdd() {
   if (currentSection === 'guests') openGuestModal();
@@ -775,6 +852,73 @@ function openAdd() {
   else openBudgetModal();
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ── XSS PROTECTION ───────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── USER / LOGIN ──────────────────────────────────────────────────────────
+let currentUser = sessionStorage.getItem('bigday_user') || null;
+function selectUser(name) {
+  currentUser = name;
+  sessionStorage.setItem('bigday_user', name);
+  document.getElementById('login-screen').style.display = 'none';
+  const chip = document.getElementById('user-chip');
+  chip.textContent = (name === 'Nounou' ? '🤵🏻 ' : '👰🏼 ') + name;
+}
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+}
+function initUser() {
+  const screen = document.getElementById('login-screen');
+  if (currentUser) {
+    screen.style.display = 'none';
+    const chip = document.getElementById('user-chip');
+    chip.textContent = (currentUser === 'Nounou' ? '🤵🏻 ' : '👰🏼 ') + currentUser;
+  }
+}
+
+// ── ACTIVITY LOG ──────────────────────────────────────────────────────────
+function logActivity(action, details) {
+  const entry = {
+    id: uid(),
+    user: currentUser || '?',
+    action,
+    details,
+    ts: new Date().toISOString(),
+  };
+  actLog.unshift(entry);
+  if (actLog.length > 200) actLog = actLog.slice(0, 200);
+  saveState();
+  if (document.getElementById('section-activity').classList.contains('active')) renderActivity();
+}
+function renderActivity() {
+  const el = document.getElementById('activity-list');
+  if (!actLog.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Aucune activité enregistrée.</p></div>';
+    return;
+  }
+  el.innerHTML = actLog.map(e => {
+    const d = new Date(e.ts);
+    const dateStr = d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const cls = e.user === 'Nounou' ? 'nounou' : 'nounette';
+    const avatar = e.user === 'Nounou' ? '🤵🏻' : '👰🏼';
+    return \`<div class="act-card">
+      <div class="act-header">
+        <span class="act-user \${cls}">\${avatar} \${esc(e.user)}</span>
+        <span class="act-time">\${dateStr}</span>
+      </div>
+      <div class="act-action">\${esc(e.action)} \${e.details ? '· ' + esc(e.details) : ''}</div>
+    </div>\`;
+  }).join('');
+}
+function clearActivity() {
+  if (!confirm('Effacer tout l'historique ?')) return;
+  actLog = [];
+  saveState();
+  renderActivity();
+}
 
 // ────────────────────────────────────────────────────────────────
 // INVITÉS
@@ -826,7 +970,7 @@ function renderGuests() {
     return `<div class="card" onclick="editGuest('${g.id}')">
       <div class="card-row">
         <div style="flex:1">
-          <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
+          <div class="card-name">${esc(g.prenom)}${g.nom ? ' ' + esc(g.nom) : ''}</div>
           <div class="card-sub">${[g.table_num ? 'Table ' + g.table_num : '', couchageInfo].filter(Boolean).join(' · ')}</div>
         </div>
         <span class="tag tag-${statutClass}">${statutIcon} ${g.statut || '—'}</span>
@@ -837,7 +981,7 @@ function renderGuests() {
         ${g.repas && g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
         ${stdBadge}
       </div>
-      ${g.notes ? `<div class="card-notes">📝 ${g.notes}</div>` : ''}
+      ${g.notes ? `<div class="card-notes">📝 ${esc(g.notes)}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -892,13 +1036,14 @@ function saveGuest() {
   };
   if (editingGuestId) guests = guests.map(x => x.id === editingGuestId ? g : x);
   else guests.unshift(g);
-  saveState(); sbUpsert('guests', g); renderGuests(); closeGuestModal();
+  saveState(); sbUpsert('guests', g); logActivity(editingGuestId ? 'Invité modifié' : 'Invité ajouté', g.prenom + (g.nom ? ' '+g.nom : '')); renderGuests(); closeGuestModal();
 }
 function editGuest(id) { openGuestModal(id); }
 function deleteGuest() {
   if (!confirm('Supprimer cet invité ?')) return;
+  const g = guests.find(x => x.id === editingGuestId);
   guests = guests.filter(x => x.id !== editingGuestId);
-  saveState(); sbDelete('guests', editingGuestId); renderGuests(); closeGuestModal();
+  saveState(); sbDelete('guests', editingGuestId); logActivity('Invité supprimé', g?.prenom || ''); renderGuests(); closeGuestModal();
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -943,7 +1088,7 @@ function renderTasks() {
     return `<div class="card" onclick="editTask('${t.id}')" style="${t.statut==='fait'?'opacity:.55':''}">
       <div class="card-row">
         <div style="flex:1">
-          <div class="card-name" style="${t.statut==='fait'?'text-decoration:line-through':''}">${t.titre}</div>
+          <div class="card-name" style="${t.statut==='fait'?'text-decoration:line-through':''}">${esc(t.titre)}</div>
           <div class="card-sub">${t.categorie || ''}${dl ? ' · 📅 ' + dl : ''}</div>
         </div>
         <span class="tag tag-${tagStatut}">${t.statut}</span>
@@ -984,13 +1129,14 @@ function saveTask() {
   };
   if (editingTaskId) tasks = tasks.map(x => x.id === editingTaskId ? t : x);
   else tasks.unshift(t);
-  saveState(); sbUpsert('wedding_tasks', t); renderTasks(); closeTaskModal();
+  saveState(); sbUpsert('wedding_tasks', t); logActivity(editingTaskId ? 'Tâche modifiée' : 'Tâche ajoutée', t.titre); renderTasks(); closeTaskModal();
 }
 function editTask(id) { openTaskModal(id); }
 function deleteTask() {
   if (!confirm('Supprimer cette tâche ?')) return;
+  const t = tasks.find(x => x.id === editingTaskId);
   tasks = tasks.filter(x => x.id !== editingTaskId);
-  saveState(); sbDelete('wedding_tasks', editingTaskId); renderTasks(); closeTaskModal();
+  saveState(); sbDelete('wedding_tasks', editingTaskId); logActivity('Tâche supprimée', t?.titre || ''); renderTasks(); closeTaskModal();
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -1042,7 +1188,7 @@ function renderBudget() {
     return `<div class="card" onclick="editBudget('${b.id}')">
       <div class="card-row">
         <div style="flex:1">
-          <div class="card-name">${b.description}</div>
+          <div class="card-name">${esc(b.description)}</div>
           <div class="card-sub">${b.categorie || ''}</div>
         </div>
         <span class="tag tag-${tagStatut}">${b.statut}</span>
@@ -1086,13 +1232,14 @@ function saveBudget() {
   };
   if (editingBudgetId) budget = budget.map(x => x.id === editingBudgetId ? b : x);
   else budget.unshift(b);
-  saveState(); sbUpsert('budget_items', b); renderBudget(); closeBudgetModal();
+  saveState(); sbUpsert('budget_items', b); logActivity(editingBudgetId ? 'Budget modifié' : 'Budget ajouté', b.description); renderBudget(); closeBudgetModal();
 }
 function editBudget(id) { openBudgetModal(id); }
 function deleteBudget() {
   if (!confirm('Supprimer cette dépense ?')) return;
+  const b = budget.find(x => x.id === editingBudgetId);
   budget = budget.filter(x => x.id !== editingBudgetId);
-  saveState(); sbDelete('budget_items', editingBudgetId); renderBudget(); closeBudgetModal();
+  saveState(); sbDelete('budget_items', editingBudgetId); logActivity('Dépense supprimée', b?.description || ''); renderBudget(); closeBudgetModal();
 }
 
 // ── CLOSE ON BG ───────────────────────────────────────────────────
@@ -1104,6 +1251,7 @@ function deleteBudget() {
 
 // ── INITIAL RENDER ────────────────────────────────────────────────
 renderGuests();
+initUser();
 
 // ── CLOUD SYNC ────────────────────────────────────────────────────
 (async () => {
