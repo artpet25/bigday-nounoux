@@ -534,7 +534,6 @@ body {
     <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
       <div class="countdown-badge" id="countdown-mairie"></div>
       <div class="countdown-badge countdown-eglise" id="countdown-eglise"></div>
-      <button class="user-chip" id="user-chip" onclick="showLogin()"></button>
     </div>
   </div>
 </div>
@@ -864,18 +863,14 @@ function selectUser(name) {
   currentUser = name;
   sessionStorage.setItem('bigday_user', name);
   document.getElementById('login-screen').style.display = 'none';
-  const chip = document.getElementById('user-chip');
-  chip.textContent = (name === 'Nounou' ? '🤵🏻 ' : '👰🏼 ') + name;
+  logActivity('Connexion', name);
 }
 function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
 }
 function initUser() {
-  const screen = document.getElementById('login-screen');
   if (currentUser) {
-    screen.style.display = 'none';
-    const chip = document.getElementById('user-chip');
-    chip.textContent = (currentUser === 'Nounou' ? '🤵🏻 ' : '👰🏼 ') + currentUser;
+    document.getElementById('login-screen').style.display = 'none';
   }
 }
 
