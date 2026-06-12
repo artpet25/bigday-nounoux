@@ -468,14 +468,10 @@ body {
 /* ── DIVIDER ── */
 .divider { height: 1px; background: var(--border); margin: 6px 0 14px; }
 
-/* ── STACKED ICON (Save the date) ── */
-.icon-stack { position: relative; display: inline-block; width: 1.4em; height: 1.1em; vertical-align: middle; }
-.icon-stack .icon-badge { position: absolute; bottom: -5px; right: -8px; font-size: 12px; font-weight: 900; line-height: 1; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
-.icon-badge-red  { color: #d94f3d; }
-.icon-badge-green { color: #2d9b6f; }
-
-/* ── CATEGORY TAG ── */
+/* ── TAGS STD & CATÉGORIE ── */
 .tag-cat { background: var(--gold-dim); color: var(--gold); }
+.tag-std-envoyé  { background: rgba(245,158,11,0.12); color: #b45309; border: 1.5px solid #f59e0b; }
+.tag-std-confirmé { background: var(--green-dim); color: var(--green); border: 1.5px solid var(--green); }
 </style>
 </head>
 <body>
@@ -504,7 +500,6 @@ body {
     <div class="ftab" onclick="guestFilter('oui',this)">✅ Oui</div>
     <div class="ftab" onclick="guestFilter('peut-être',this)">❓ Peut-être</div>
     <div class="ftab" onclick="guestFilter('non',this)">❌ Non</div>
-    <div class="ftab" onclick="guestFilter('save the date',this)">✉️ STD</div>
     <select class="fsel" id="g-cote-filter" onchange="renderGuests()">
       <option value="">Côté…</option>
       <option value="nounou">🤵🏻 Nounou</option>
@@ -584,13 +579,18 @@ body {
       </div>
       <div class="field"><label>Statut</label>
         <select id="g-statut">
-          <option value="save the date">✉️❌ Save the date</option>
-          <option value="save the date confirmé">✉️✅ STD confirmé</option>
           <option value="peut-être">❓ Peut-être</option>
           <option value="oui">✅ Oui</option>
           <option value="non">❌ Non</option>
         </select>
       </div>
+    </div>
+    <div class="field"><label>Save the Date (STD)</label>
+      <select id="g-std">
+        <option value="">— Non envoyé —</option>
+        <option value="envoyé">📩 Envoyé</option>
+        <option value="confirmé">📩 Confirmé</option>
+      </select>
     </div>
     <div class="two-col">
       <div class="field"><label>Repas</label>
@@ -601,7 +601,7 @@ body {
         </select>
       </div>
       <div class="field"><label>Couchage</label>
-        <select id="g-couchage">
+        <select id="g-couchage" onchange="onCouchageChange()">
           <option value="">— Aucun —</option>
           <option value="château">🏰 Château</option>
           <option value="gîte">🏡 Gîte</option>
@@ -610,6 +610,8 @@ body {
         </select>
       </div>
     </div>
+    <div class="field" id="g-chambre-field" style="display:none"><label>N° Chambre Château</label><input id="g-chambre" type="text" placeholder="—" autocomplete="off"></div>
+    <div class="field" id="g-nomgite-field" style="display:none"><label>Nom du Gîte</label><input id="g-nomgite" type="text" placeholder="—" autocomplete="off"></div>
     <div class="field"><label>N° Table</label><input id="g-table" type="number" placeholder="—"></div>
     <div class="field"><label>Notes</label><textarea id="g-notes" placeholder="Infos complémentaires…"></textarea></div>
     <div class="divider"></div>
@@ -784,11 +786,7 @@ function renderGuests() {
   const cote = document.getElementById('g-cote-filter').value;
   const cat  = document.getElementById('g-cat-filter').value;
   let list = guests.filter(g => {
-    if (gFilter !== 'tous') {
-      if (gFilter === 'save the date') {
-        if (!g.statut || !g.statut.startsWith('save the date')) return false;
-      } else if (g.statut !== gFilter) return false;
-    }
+    if (gFilter !== 'tous' && g.statut !== gFilter) return false;
     if (cote && g.cote !== cote) return false;
     if (cat  && g.categorie !== cat) return false;
     return true;
@@ -796,11 +794,11 @@ function renderGuests() {
   const total = guests.length;
   const oui   = guests.filter(g => g.statut === 'oui').length;
   const non   = guests.filter(g => g.statut === 'non').length;
-  const std   = guests.filter(g => g.statut && g.statut.startsWith('save the date')).length;
+  const stdConf = guests.filter(g => g.std === 'confirmé').length;
   document.getElementById('guests-stats').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${std}</div><div class="stat-lbl">STD ✉️</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--gold)">${stdConf}</div><div class="stat-lbl">STD ✓</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
   `;
   const el = document.getElementById('guests-list');
@@ -809,32 +807,33 @@ function renderGuests() {
     return;
   }
   el.innerHTML = list.map(g => {
-    const isSTD = g.statut && g.statut.startsWith('save the date');
-    const isSTDConf = g.statut === 'save the date confirmé';
-    let statutIcon;
-    if (g.statut === 'oui') statutIcon = '✅';
-    else if (g.statut === 'non') statutIcon = '❌';
-    else if (g.statut === 'peut-être') statutIcon = '❓';
-    else if (isSTD) statutIcon = `<span class="icon-stack">✉️<span class="icon-badge ${isSTDConf ? 'icon-badge-green' : 'icon-badge-red'}">${isSTDConf ? '✓' : '✕'}</span></span>`;
-    else statutIcon = '💌';
-    const statutLabel = isSTDConf ? 'STD confirmé' : isSTD ? 'Save the date' : g.statut;
-    const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : isSTDConf ? 'savedatedone' : isSTD ? 'savethedate' : 'invité';
+    const statutIcon = g.statut === 'oui' ? '✅' : g.statut === 'non' ? '❌' : '❓';
+    const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : 'peut-être';
     const coteIcon = g.cote === 'nounou' ? '🤵🏻' : g.cote === 'nounette' ? '👰🏼' : '🤝';
     const coteClass = g.cote === 'nounou' ? 'nounou' : g.cote === 'nounette' ? 'nounette' : 'commun';
+    const stdBadge = g.std === 'confirmé'
+      ? `<span class="tag tag-std-confirmé">📩 STD confirmé</span>`
+      : g.std === 'envoyé'
+      ? `<span class="tag tag-std-envoyé">📩 STD envoyé</span>`
+      : '';
+    const couchageInfo = g.couchage
+      ? g.couchage + (g.chambre ? ' #' + g.chambre : '') + (g.nom_gite ? ' — ' + g.nom_gite : '')
+      : '—';
     return `<div class="card" onclick="editGuest('${g.id}')">
       <div class="card-row">
-        <div>
+        <div style="flex:1">
           <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
-          <div class="card-sub">${g.table_num ? 'Table ' + g.table_num : ''}${g.couchage ? (g.table_num ? ' · ' : '') + g.couchage : ''}</div>
+          <div class="card-sub">Table: ${g.table_num || '—'} · ${couchageInfo}</div>
         </div>
-        <span class="tag tag-${statutClass}" style="display:inline-flex;align-items:center;gap:3px">${statutIcon} ${statutLabel}</span>
+        <span class="tag tag-${statutClass}">${statutIcon} ${g.statut || '—'}</span>
       </div>
       <div class="tags">
-        <span class="tag tag-${coteClass}">${coteIcon} ${g.cote}</span>
+        <span class="tag tag-${coteClass}">${coteIcon} ${g.cote || '—'}</span>
         ${g.categorie ? `<span class="tag tag-cat">🏷️ ${g.categorie}</span>` : ''}
         ${g.repas && g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
-        ${g.notes ? `<span class="tag tag-invité">📝</span>` : ''}
+        ${stdBadge}
       </div>
+      ${g.notes ? `<div class="card-notes">📝 ${g.notes}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -847,14 +846,23 @@ function openGuestModal(id = null) {
   document.getElementById('g-prenom').value = g ? (g.prenom + (g.nom ? ' ' + g.nom : '')) : '';
   document.getElementById('g-cote').value = g?.cote || 'nounou';
   document.getElementById('g-cat').value = g?.categorie || '';
-  document.getElementById('g-statut').value = g?.statut || 'save the date';
+  document.getElementById('g-statut').value = g?.statut || 'peut-être';
+  document.getElementById('g-std').value = g?.std || '';
   document.getElementById('g-repas').value = g?.repas || 'normal';
   document.getElementById('g-couchage').value = g?.couchage || '';
+  document.getElementById('g-chambre').value = g?.chambre || '';
+  document.getElementById('g-nomgite').value = g?.nom_gite || '';
   document.getElementById('g-table').value = g?.table_num || '';
   document.getElementById('g-notes').value = g?.notes || '';
+  onCouchageChange();
   document.getElementById('g-del-btn').style.display = id ? 'block' : 'none';
   document.getElementById('guest-overlay').classList.add('open');
   setTimeout(() => document.getElementById('g-prenom').focus(), 100);
+}
+function onCouchageChange() {
+  const v = document.getElementById('g-couchage').value;
+  document.getElementById('g-chambre-field').style.display = v === 'château' ? 'block' : 'none';
+  document.getElementById('g-nomgite-field').style.display = v === 'gîte' ? 'block' : 'none';
 }
 function closeGuestModal() { document.getElementById('guest-overlay').classList.remove('open'); }
 function saveGuest() {
@@ -870,8 +878,11 @@ function saveGuest() {
     cote:     document.getElementById('g-cote').value,
     categorie: document.getElementById('g-cat').value,
     statut:   document.getElementById('g-statut').value,
+    std:      document.getElementById('g-std').value,
     repas:    document.getElementById('g-repas').value,
     couchage: document.getElementById('g-couchage').value,
+    chambre:  document.getElementById('g-chambre').value.trim(),
+    nom_gite: document.getElementById('g-nomgite').value.trim(),
     table_num: parseInt(document.getElementById('g-table').value) || null,
     notes:    document.getElementById('g-notes').value.trim(),
   };
