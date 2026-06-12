@@ -1,34 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#1a1118"/>
-  <defs>
-    <!-- Front of left ring: left side (x < 53) -->
-    <clipPath id="lf"><rect x="0" y="0" width="53" height="100"/></clipPath>
-    <!-- Back of left ring: right side (x > 53) -->
-    <clipPath id="lb"><rect x="53" y="0" width="47" height="100"/></clipPath>
-  </defs>
-
-  <!-- LEFT RING (plain band) — back portion (dim, behind right ring) -->
-  <ellipse cx="40" cy="53" rx="24" ry="12"
-           stroke="rgba(255,255,255,0.22)" stroke-width="7" fill="none"
-           transform="rotate(-8 40 53)"
-           clip-path="url(#lb)"/>
-
-  <!-- RIGHT RING (diamond band) — full, in front of back portion of left ring -->
-  <ellipse cx="60" cy="47" rx="24" ry="12"
-           stroke="white" stroke-width="6.5" fill="none"
-           transform="rotate(8 60 47)"/>
-  <!-- Diamond top -->
-  <polygon points="60,17 65,25 60,33 55,25"
-           stroke="white" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
-  <line x1="55" y1="25" x2="65" y2="25" stroke="white" stroke-width="1.8"/>
-  <!-- Tiny sparkle lines -->
-  <line x1="60" y1="14" x2="60" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="67" y1="17" x2="69" y2="15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="53" y1="17" x2="51" y2="15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-
-  <!-- LEFT RING (plain band) — front portion (bright, over right ring) -->
-  <ellipse cx="40" cy="53" rx="24" ry="12"
-           stroke="white" stroke-width="7.5" fill="none"
-           transform="rotate(-8 40 53)"
-           clip-path="url(#lf)"/>
+  <rect width="100" height="100" rx="22" fill="#1a1118"/>
+  <ellipse cx="50" cy="68" rx="26" ry="10" stroke="white" stroke-width="6" fill="none"/>
+  <polygon points="50,18 62,32 50,42 38,32" fill="white" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+  <polygon points="38,32 50,42 62,32" fill="rgba(255,255,255,0.55)" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+  <line x1="38" y1="32" x2="62" y2="32" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+  <line x1="50" y1="18" x2="50" y2="42" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
+  <line x1="50" y1="43" x2="50" y2="58" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="50" y1="12" x2="50" y2="9"  stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="67" y1="18" x2="69" y2="16" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="33" y1="18" x2="31" y2="16" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="72" y1="32" x2="75" y2="32" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="28" y1="32" x2="25" y2="32" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
 </svg>
