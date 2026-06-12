@@ -220,27 +220,36 @@ body {
 /* ── CARDS ── */
 .card {
   background: var(--surface);
-  border-radius: var(--radius);
-  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   cursor: pointer;
   transition: all var(--t);
   box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.card:active { transform: scale(.98); border-color: var(--accent); box-shadow: 0 4px 20px var(--accent-glow); }
-.card-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.card-name { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
-.card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 500; }
-.card-notes { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.card:active { transform: scale(.98); border-color: var(--accent); }
+.card-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: 1; min-width: 0; }
+.card-name { font-size: 14px; font-weight: 600; letter-spacing: -.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-sub { font-size: 11px; color: var(--muted); font-weight: 500; }
+.card-notes { font-size: 11px; color: var(--muted); }
+.tags { display: flex; flex-wrap: nowrap; gap: 4px; align-items: center; flex-shrink: 0; }
 .tag {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   letter-spacing: .1px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+/* Stat cards clickable */
+.stat-card { cursor: pointer; transition: all var(--t); }
+.stat-card:active { transform: scale(.96); }
+.stat-card.active { border-color: var(--accent); box-shadow: 0 2px 12px var(--accent-glow); background: var(--accent-dim); }
 .tag-confirmé { background: var(--green-dim); color: var(--green); }
 .tag-décliné { background: var(--red-dim); color: var(--red); }
 .tag-invité { background: var(--accent-dim); color: var(--accent); }
@@ -558,19 +567,15 @@ body {
 <!-- SECTIONS -->
 <div class="section active" id="section-guests">
   <div class="stats-row" id="guests-stats"></div>
-  <div class="filter-scroll">
-    <div class="ftab active" onclick="guestFilter('tous',this)">Tous</div>
-    <div class="ftab" onclick="guestFilter('oui',this)">✅ Oui</div>
-    <div class="ftab" onclick="guestFilter('peut-être',this)">❓ Peut-être</div>
-    <div class="ftab" onclick="guestFilter('non',this)">❌ Non</div>
-    <select class="fsel" id="g-cote-filter" onchange="renderGuests()">
-      <option value="">Côté…</option>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <select class="fsel" id="g-cote-filter" onchange="renderGuests()" style="flex:1">
+      <option value="">Tous les côtés</option>
       <option value="nounou">🤵🏻 Nounou</option>
       <option value="nounette">👰🏼 Nounette</option>
       <option value="commun">Commun</option>
     </select>
-    <select class="fsel" id="g-cat-filter" onchange="renderGuests()">
-      <option value="">Catégorie…</option>
+    <select class="fsel" id="g-cat-filter" onchange="renderGuests()" style="flex:1">
+      <option value="">Toutes catégories</option>
       <option>Amis</option><option>Foot</option><option>Collègues</option><option>One Point</option><option>Autre</option>
     </select>
   </div>
@@ -921,10 +926,8 @@ function clearActivity() {
 // INVITÉS
 // ────────────────────────────────────────────────────────────────
 let gFilter = 'tous';
-function guestFilter(f, el) {
+function statGuestFilter(f) {
   gFilter = f;
-  document.querySelectorAll('#section-guests .ftab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
   renderGuests();
 }
 function renderGuests() {
@@ -940,11 +943,12 @@ function renderGuests() {
   const oui   = guests.filter(g => g.statut === 'oui').length;
   const non   = guests.filter(g => g.statut === 'non').length;
   const stdConf = guests.filter(g => g.std === 'confirmé').length;
+  const peutEtre = guests.filter(g => g.statut === 'peut-être').length;
   document.getElementById('guests-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--gold)">${stdConf}</div><div class="stat-lbl">STD ✓</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
+    <div class="stat-card${gFilter==='tous'?' active':''}" onclick="statGuestFilter('tous')"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card${gFilter==='oui'?' active':''}" onclick="statGuestFilter('oui')"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
+    <div class="stat-card${gFilter==='peut-être'?' active':''}" onclick="statGuestFilter('peut-être')"><div class="stat-num" style="color:#b45309">${peutEtre}</div><div class="stat-lbl">Peut-être</div></div>
+    <div class="stat-card${gFilter==='non'?' active':''}" onclick="statGuestFilter('non')"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
   `;
   const el = document.getElementById('guests-list');
   if (!list.length) {
@@ -955,30 +959,22 @@ function renderGuests() {
     const statutIcon = g.statut === 'oui' ? '✅' : g.statut === 'non' ? '❌' : '❓';
     const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : 'peut-être';
     const coteIcon = g.cote === 'nounou' ? '🤵🏻' : g.cote === 'nounette' ? '👰🏼' : '🤝';
-    const coteClass = g.cote === 'nounou' ? 'nounou' : g.cote === 'nounette' ? 'nounette' : 'commun';
     const stdBadge = g.std === 'confirmé'
-      ? `<span class="tag tag-std-confirmé">📩 STD confirmé</span>`
+      ? `<span class="tag tag-std-confirmé">📩✓</span>`
       : g.std === 'envoyé'
-      ? `<span class="tag tag-std-envoyé">📩 STD envoyé</span>`
-      : '';
-    const couchageInfo = g.couchage
-      ? g.couchage + (g.chambre ? ' #' + g.chambre : '') + (g.nom_gite ? ' — ' + g.nom_gite : '')
+      ? `<span class="tag tag-std-envoyé">📩</span>`
       : '';
     return `<div class="card" onclick="editGuest('${g.id}')">
+      <span style="font-size:16px;flex-shrink:0">${coteIcon}</span>
       <div class="card-row">
-        <div style="flex:1">
-          <div class="card-name">${esc(g.prenom)}${g.nom ? ' ' + esc(g.nom) : ''}</div>
-          <div class="card-sub">${[g.table_num ? 'Table ' + g.table_num : '', couchageInfo].filter(Boolean).join(' · ')}</div>
+        <div class="card-name" style="flex:1">${esc(g.prenom)}${g.nom ? ' ' + esc(g.nom) : ''}</div>
+        <div class="tags">
+          ${g.categorie ? `<span class="tag tag-cat">${esc(g.categorie)}</span>` : ''}
+          ${stdBadge}
+          ${g.notes ? `<span style="font-size:12px">📝</span>` : ''}
+          <span class="tag tag-${statutClass}">${statutIcon}</span>
         </div>
-        <span class="tag tag-${statutClass}">${statutIcon} ${g.statut || '—'}</span>
       </div>
-      <div class="tags">
-        <span class="tag tag-${coteClass}">${coteIcon} ${g.cote || '—'}</span>
-        ${g.categorie ? `<span class="tag tag-cat">🏷️ ${g.categorie}</span>` : ''}
-        ${g.repas && g.repas !== 'normal' ? `<span class="tag tag-invité">${g.repas}</span>` : ''}
-        ${stdBadge}
-      </div>
-      ${g.notes ? `<div class="card-notes">📝 ${esc(g.notes)}</div>` : ''}
     </div>`;
   }).join('');
 }
