@@ -904,17 +904,17 @@ function renderActivity() {
     const dateStr = d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     const cls = e.user === 'Nounou' ? 'nounou' : 'nounette';
     const avatar = e.user === 'Nounou' ? '🤵🏻' : '👰🏼';
-    return \`<div class="act-card">
+    return `<div class="act-card">
       <div class="act-header">
-        <span class="act-user \${cls}">\${avatar} \${esc(e.user)}</span>
-        <span class="act-time">\${dateStr}</span>
+        <span class="act-user ${cls}">${avatar} ${esc(e.user)}</span>
+        <span class="act-time">${dateStr}</span>
       </div>
-      <div class="act-action">\${esc(e.action)} \${e.details ? '· ' + esc(e.details) : ''}</div>
-    </div>\`;
+      <div class="act-action">${esc(e.action)} ${e.details ? '· ' + esc(e.details) : ''}</div>
+    </div>`;
   }).join('');
 }
 function clearActivity() {
-  if (!confirm('Effacer tout l'historique ?')) return;
+  if (!confirm('Effacer tout l\'historique ?')) return;
   actLog = [];
   saveState();
   renderActivity();
