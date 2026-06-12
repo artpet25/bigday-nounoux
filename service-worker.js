@@ -1,6 +1,6 @@
 $ cat /home/user/mariage-nounous/service-worker.js
 
-const CACHE_NAME = 'mariage-nounous-v1';
+const CACHE_NAME = 'mariage-nounous-v14';
 
 const PRECACHE_ASSETS = [
   '/bigday-nounoux/',
