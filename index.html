@@ -537,6 +537,8 @@ body {
 }
 .btn-toggle-brunch.active-oui { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 .btn-toggle-brunch.active-non { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.btn-toggle-brunch.active-peutetre { background: rgba(245,158,11,0.12); border-color: #f59e0b; color: #b45309; }
+.btn-toggle-brunch.active-std-env { background: rgba(245,158,11,0.12); border-color: #f59e0b; color: #b45309; }
 
 /* ── ACTIVITY LOG ── */
 .act-card {
@@ -696,20 +698,19 @@ body {
         </select>
       </div>
       <div class="field"><label>Invitation</label>
-        <select id="g-statut">
-          <option value="peut-être">❓ Peut-être</option>
-          <option value="oui">✅ Oui</option>
-          <option value="non">❌ Non</option>
-        </select>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button type="button" id="g-inv-oui" onclick="setInvitation('oui')" class="btn-toggle-brunch" style="font-size:12px">✅ Oui</button>
+          <button type="button" id="g-inv-non" onclick="setInvitation('non')" class="btn-toggle-brunch" style="font-size:12px">❌ Non</button>
+          <button type="button" id="g-inv-peutetre" onclick="setInvitation('peut-être')" class="btn-toggle-brunch" style="font-size:12px">❓ ?</button>
+        </div>
       </div>
     </div>
     <div class="two-col">
-      <div class="field"><label>Save the Date (STD)</label>
-        <select id="g-std">
-          <option value="">— Non envoyé —</option>
-          <option value="envoyé">📩 Envoyé</option>
-          <option value="confirmé">📩 Confirmé</option>
-        </select>
+      <div class="field"><label>Save the Date</label>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button type="button" id="g-std-env" onclick="setSTD('envoyé')" class="btn-toggle-brunch" style="font-size:12px">📩 Envoyé</button>
+          <button type="button" id="g-std-conf" onclick="setSTD('confirmé')" class="btn-toggle-brunch" style="font-size:12px">✅ Confirmé</button>
+        </div>
       </div>
       <div class="field"><label>Brunch</label>
         <div style="display:flex;gap:8px;margin-top:2px">
@@ -1052,8 +1053,10 @@ function openGuestModal(id = null) {
   document.getElementById('g-prenom').value = g ? (g.prenom + (g.nom ? ' ' + g.nom : '')) : '';
   document.getElementById('g-cote').value = g?.cote || 'nounou';
   document.getElementById('g-cat').value = g?.categorie || '';
-  document.getElementById('g-statut').value = g?.statut || 'peut-être';
-  document.getElementById('g-std').value = g?.std || '';
+  setInvitation(g?.statut || 'peut-être');
+  gSTD = g?.std || '';
+  document.getElementById('g-std-env').className = 'btn-toggle-brunch' + (gSTD === 'envoyé' ? ' active-std-env' : '');
+  document.getElementById('g-std-conf').className = 'btn-toggle-brunch' + (gSTD === 'confirmé' ? ' active-oui' : '');
   document.getElementById('g-repas').value = g?.repas || 'normal';
   document.getElementById('g-couchage').value = g?.couchage || '';
   document.getElementById('g-chambre').value = g?.chambre || '';
@@ -1069,6 +1072,20 @@ function openGuestModal(id = null) {
   setTimeout(() => document.getElementById('g-prenom').focus(), 100);
 }
 let gBrunch = '';
+let gStatut = 'peut-être';
+let gSTD = '';
+
+function setInvitation(val) {
+  gStatut = val;
+  document.getElementById('g-inv-oui').className = 'btn-toggle-brunch' + (val === 'oui' ? ' active-oui' : '');
+  document.getElementById('g-inv-non').className = 'btn-toggle-brunch' + (val === 'non' ? ' active-non' : '');
+  document.getElementById('g-inv-peutetre').className = 'btn-toggle-brunch' + (val === 'peut-être' ? ' active-peutetre' : '');
+}
+function setSTD(val) {
+  gSTD = gSTD === val ? '' : val;
+  document.getElementById('g-std-env').className = 'btn-toggle-brunch' + (gSTD === 'envoyé' ? ' active-std-env' : '');
+  document.getElementById('g-std-conf').className = 'btn-toggle-brunch' + (gSTD === 'confirmé' ? ' active-oui' : '');
+}
 function setBrunch(val) {
   gBrunch = gBrunch === val ? '' : val;
   document.getElementById('g-brunch-oui').className = 'btn-toggle-brunch' + (gBrunch === 'oui' ? ' active-oui' : '');
@@ -1092,8 +1109,8 @@ function saveGuest() {
     nom,
     cote:     document.getElementById('g-cote').value,
     categorie: document.getElementById('g-cat').value,
-    statut:   document.getElementById('g-statut').value,
-    std:      document.getElementById('g-std').value,
+    statut:   gStatut,
+    std:      gSTD,
     repas:    document.getElementById('g-repas').value,
     couchage: document.getElementById('g-couchage').value,
     chambre:  document.getElementById('g-chambre').value.trim(),
