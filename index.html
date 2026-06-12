@@ -488,6 +488,72 @@ body {
 
 /* ── CATEGORY TAG ── */
 .tag-cat { background: var(--gold-dim); color: var(--gold); }
+.tag-std-envoyé  { background: rgba(245,158,11,0.12); color: #b45309; border: 1.5px solid #f59e0b; }
+.tag-std-confirmé { background: var(--green-dim); color: var(--green); border: 1.5px solid var(--green); }
+.tag-brunch { background: var(--blue-dim); color: var(--blue); border: 1.5px solid var(--blue); }
+
+/* ── LOGIN ── */
+.login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 24px;
+}
+.login-title { font-size: 52px; font-weight: 800; letter-spacing: -2px; color: var(--text); margin-bottom: 6px; }
+.login-sub { font-size: 16px; color: var(--muted); margin-bottom: 48px; font-weight: 500; }
+.user-btns { display: flex; gap: 20px; }
+.user-btn {
+  flex: 1; min-width: 130px;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px 20px;
+  cursor: pointer; transition: all var(--t);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  box-shadow: var(--shadow);
+  font-family: 'Inter', sans-serif;
+}
+.user-btn:active { transform: scale(.96); border-color: var(--accent); }
+.user-btn .u-avatar { font-size: 40px; line-height: 1; }
+.user-btn .u-name { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+
+/* ── USER CHIP ── */
+.user-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent-dim); color: var(--accent);
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 20px; cursor: pointer;
+  border: none; font-family: 'Inter', sans-serif;
+}
+
+/* ── BRUNCH TOGGLE ── */
+.btn-toggle-brunch {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all var(--t);
+}
+.btn-toggle-brunch.active-oui { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.btn-toggle-brunch.active-non { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+/* ── ACTIVITY LOG ── */
+.act-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 12px 16px; border: 1px solid var(--border);
+  margin-bottom: 8px; box-shadow: var(--shadow-sm);
+}
+.act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.act-user { font-size: 12px; font-weight: 700; }
+.act-user.nounou { color: #1565c0; }
+.act-user.nounette { color: #c2185b; }
+.act-time { font-size: 11px; color: var(--muted); }
+.act-action { font-size: 13px; color: var(--text2); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -634,12 +700,20 @@ body {
         </select>
       </div>
     </div>
-    <div class="field"><label>Save the Date (STD)</label>
-      <select id="g-std">
-        <option value="">— Non envoyé —</option>
-        <option value="envoyé">📩 Envoyé</option>
-        <option value="confirmé">📩 Confirmé</option>
-      </select>
+    <div class="two-col">
+      <div class="field"><label>Save the Date (STD)</label>
+        <select id="g-std">
+          <option value="">— Non envoyé —</option>
+          <option value="envoyé">📩 Envoyé</option>
+          <option value="confirmé">📩 Confirmé</option>
+        </select>
+      </div>
+      <div class="field"><label>Brunch</label>
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <button type="button" id="g-brunch-oui" onclick="setBrunch('oui')" class="btn-toggle-brunch">✅ Oui</button>
+          <button type="button" id="g-brunch-non" onclick="setBrunch('non')" class="btn-toggle-brunch">❌ Non</button>
+        </div>
+      </div>
     </div>
     <div class="two-col">
       <div class="field"><label>Repas</label>
@@ -893,16 +967,20 @@ function clearActivity() {
 // ────────────────────────────────────────────────────────────────
 let gFilter = 'tous';
 let stdFilter = '';
+let brunchFilter = false;
 function statGuestFilter(f, sf) {
   gFilter = f;
   stdFilter = sf;
+  brunchFilter = (f === 'brunch');
+  if (brunchFilter) gFilter = 'tous';
   renderGuests();
 }
 function renderGuests() {
   const cote = document.getElementById('g-cote-filter').value;
   const cat  = document.getElementById('g-cat-filter').value;
   let list = guests.filter(g => {
-    if (gFilter !== 'tous' && g.statut !== gFilter) return false;
+    if (brunchFilter && g.brunch !== 'oui') return false;
+    if (!brunchFilter && gFilter !== 'tous' && g.statut !== gFilter) return false;
     if (stdFilter && g.std !== stdFilter) return false;
     if (cote && g.cote !== cote) return false;
     if (cat  && g.categorie !== cat) return false;
@@ -916,14 +994,20 @@ function renderGuests() {
   const stdEnvoye  = guests.filter(g => g.std === 'envoyé').length;
   const stdConfirm = guests.filter(g => g.std === 'confirmé').length;
   const totalNet   = oui + peutEtre;
-  document.getElementById('guests-stats').className = 'stats-row stats-3';
+  const brunchOui = guests.filter(g => g.brunch === 'oui').length;
+  document.getElementById('guests-stats').className = 'stats-row';
   document.getElementById('guests-stats').innerHTML = `
-    <div class="stat-card${gFilter==='tous'&&stdFilter===''?' active':''}" onclick="statGuestFilter('tous','')"><div class="stat-num">${totalNet}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card${gFilter==='oui'?' active':''}" onclick="statGuestFilter('oui','')"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
-    <div class="stat-card${gFilter==='peut-être'?' active':''}" onclick="statGuestFilter('peut-être','')"><div class="stat-num" style="color:#b45309">${peutEtre}</div><div class="stat-lbl">Peut-être ❓</div></div>
-    <div class="stat-card${gFilter==='non'?' active':''}" onclick="statGuestFilter('non','')"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
-    <div class="stat-card${stdFilter==='envoyé'?' active':''}" onclick="statGuestFilter('tous','envoyé')"><div class="stat-num" style="color:#b45309">${stdEnvoye}</div><div class="stat-lbl">STD envoyé 📩</div></div>
-    <div class="stat-card${stdFilter==='confirmé'?' active':''}" onclick="statGuestFilter('tous','confirmé')"><div class="stat-num" style="color:var(--green)">${stdConfirm}</div><div class="stat-lbl">STD confirmé ✓</div></div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div class="stat-card${gFilter==='tous'&&stdFilter===''?' active':''}" onclick="statGuestFilter('tous','')"><div class="stat-num">${totalNet}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-card${gFilter==='oui'?' active':''}" onclick="statGuestFilter('oui','')"><div class="stat-num" style="color:var(--green)">${oui}</div><div class="stat-lbl">Oui ✅</div></div>
+      <div class="stat-card${gFilter==='peut-être'?' active':''}" onclick="statGuestFilter('peut-être','')"><div class="stat-num" style="color:#b45309">${peutEtre}</div><div class="stat-lbl">Peut-être ❓</div></div>
+      <div class="stat-card${gFilter==='non'?' active':''}" onclick="statGuestFilter('non','')"><div class="stat-num" style="color:var(--red)">${non}</div><div class="stat-lbl">Non ❌</div></div>
+    </div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="stat-card${stdFilter==='envoyé'?' active':''}" onclick="statGuestFilter('tous','envoyé')"><div class="stat-num" style="color:#b45309">${stdEnvoye}</div><div class="stat-lbl">STD envoyé 📩</div></div>
+      <div class="stat-card${stdFilter==='confirmé'?' active':''}" onclick="statGuestFilter('tous','confirmé')"><div class="stat-num" style="color:var(--green)">${stdConfirm}</div><div class="stat-lbl">STD confirmé ✓</div></div>
+      <div class="stat-card${gFilter==='brunch'?' active':''}" onclick="statGuestFilter('brunch','')"><div class="stat-num" style="color:var(--blue)">${brunchOui}</div><div class="stat-lbl">Brunch 🥐</div></div>
+    </div>
   `;
   const el = document.getElementById('guests-list');
   if (!list.length) {
@@ -942,12 +1026,23 @@ function renderGuests() {
     const statutLabel = isSTDConf ? 'STD confirmé' : isSTD ? 'Save the date' : g.statut;
     const statutClass = g.statut === 'oui' ? 'oui' : g.statut === 'non' ? 'non' : g.statut === 'peut-être' ? 'peut-être' : isSTDConf ? 'savedatedone' : isSTD ? 'savethedate' : 'invité';
     const coteIcon = g.cote === 'nounou' ? '🤵🏻' : g.cote === 'nounette' ? '👰🏼' : '🤝';
-    const coteClass = g.cote === 'nounou' ? 'nounou' : g.cote === 'nounette' ? 'nounette' : 'commun';
-    return `<div class="card" onclick="editGuest('${g.id}')">
+    const coteCardClass = g.cote === 'nounette' ? 'card-nounette' : g.cote === 'nounou' ? 'card-nounou' : '';
+    const stdBadge = g.std === 'confirmé'
+      ? `<span class="tag tag-std-confirmé">📩✓</span>`
+      : g.std === 'envoyé'
+      ? `<span class="tag tag-std-envoyé">📩</span>`
+      : '';
+    const brunchBadge = g.brunch === 'oui' ? `<span class="tag tag-brunch">🥐 Brunch</span>` : '';
+    return `<div class="card ${coteCardClass}" onclick="editGuest('${g.id}')">
+      <span style="font-size:16px;flex-shrink:0">${coteIcon}</span>
       <div class="card-row">
-        <div>
-          <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
-          <div class="card-sub">${g.table_num ? 'Table ' + g.table_num : ''}${g.couchage ? (g.table_num ? ' · ' : '') + g.couchage : ''}</div>
+        <div class="card-name" style="flex:1">${esc(g.prenom)}${g.nom ? ' ' + esc(g.nom) : ''}</div>
+        <div class="tags">
+          ${g.categorie ? `<span class="tag tag-cat">${esc(g.categorie)}</span>` : ''}
+          ${stdBadge}
+          ${brunchBadge}
+          ${g.notes ? `<span style="font-size:12px">📝</span>` : ''}
+          <span class="tag tag-${statutClass}">${statutIcon}</span>
         </div>
         <span class="tag tag-${statutClass}" style="display:inline-flex;align-items:center;gap:3px">${statutIcon} ${statutLabel}</span>
       </div>
@@ -977,10 +1072,19 @@ function openGuestModal(id = null) {
   document.getElementById('g-nomgite').value = g?.nom_gite || '';
   document.getElementById('g-table').value = g?.table_num || '';
   document.getElementById('g-notes').value = g?.notes || '';
+  gBrunch = g?.brunch || '';
+  document.getElementById('g-brunch-oui').className = 'btn-toggle-brunch' + (gBrunch === 'oui' ? ' active-oui' : '');
+  document.getElementById('g-brunch-non').className = 'btn-toggle-brunch' + (gBrunch === 'non' ? ' active-non' : '');
   onCouchageChange();
   document.getElementById('g-del-btn').style.display = id ? 'block' : 'none';
   document.getElementById('guest-overlay').classList.add('open');
   setTimeout(() => document.getElementById('g-prenom').focus(), 100);
+}
+let gBrunch = '';
+function setBrunch(val) {
+  gBrunch = gBrunch === val ? '' : val;
+  document.getElementById('g-brunch-oui').className = 'btn-toggle-brunch' + (gBrunch === 'oui' ? ' active-oui' : '');
+  document.getElementById('g-brunch-non').className = 'btn-toggle-brunch' + (gBrunch === 'non' ? ' active-non' : '');
 }
 function onCouchageChange() {
   const v = document.getElementById('g-couchage').value;
@@ -1008,6 +1112,7 @@ function saveGuest() {
     nom_gite: document.getElementById('g-nomgite').value.trim(),
     table_num: parseInt(document.getElementById('g-table').value) || null,
     notes:    document.getElementById('g-notes').value.trim(),
+    brunch:   gBrunch,
   };
   if (editingGuestId) guests = guests.map(x => x.id === editingGuestId ? g : x);
   else guests.unshift(g);
@@ -1225,8 +1330,8 @@ function deleteBudget() {
 });
 
 // ── INITIAL RENDER ────────────────────────────────────────────────
-renderGuests();
 initUser();
+renderGuests(); // renders from localStorage immediately (offline fallback)
 
 // ── IMPORT INITIAL ────────────────────────────────────────────────────────
 (function() {
@@ -1238,32 +1343,35 @@ initUser();
   renderGuests();
 })();
 
-// ── CLOUD SYNC ────────────────────────────────────────────────────
+// ── CLOUD SYNC (source of vérité = Supabase) ─────────────────────────────
 (async () => {
   if (!sb) return;
-  const [cloudGuests, cloudTasks, cloudBudget] = await Promise.all([
-    sbFetch('guests'), sbFetch('wedding_tasks'), sbFetch('budget_items')
-  ]);
-  let changed = false;
-  if (cloudGuests?.length) {
-    const valid = cloudGuests.filter(g => g && g.id && g.prenom);
-    if (valid.length) { guests = valid; changed = true; }
-  } else if (cloudGuests !== null && guests.length) {
-    await Promise.all(guests.map(g => sbUpsert('guests', g)));
-  }
-  if (cloudTasks?.length) {
-    const valid = cloudTasks.filter(t => t && t.id && t.titre);
-    if (valid.length) { tasks = valid; changed = true; }
-  } else if (cloudTasks !== null && tasks.length) {
-    await Promise.all(tasks.map(t => sbUpsert('wedding_tasks', t)));
-  }
-  if (cloudBudget?.length) {
-    const valid = cloudBudget.filter(b => b && b.id && b.description);
-    if (valid.length) { budget = valid; changed = true; }
-  } else if (cloudBudget !== null && budget.length) {
-    await Promise.all(budget.map(b => sbUpsert('budget_items', b)));
-  }
-  if (changed) { saveState(); renderGuests(); renderTasks(); renderBudget(); }
+  try {
+    const [cloudGuests, cloudTasks, cloudBudget] = await Promise.all([
+      sbFetch('guests'), sbFetch('wedding_tasks'), sbFetch('budget_items')
+    ]);
+    let changed = false;
+    if (cloudGuests?.length) {
+      const valid = cloudGuests.filter(g => g && g.id && g.prenom);
+      if (valid.length) { guests = valid; changed = true; }
+    } else if (cloudGuests !== null && guests.length) {
+      // Supabase vide → on pousse le local
+      await Promise.all(guests.map(g => sbUpsert('guests', g)));
+    }
+    if (cloudTasks?.length) {
+      const valid = cloudTasks.filter(t => t && t.id && t.titre);
+      if (valid.length) { tasks = valid; changed = true; }
+    } else if (cloudTasks !== null && tasks.length) {
+      await Promise.all(tasks.map(t => sbUpsert('wedding_tasks', t)));
+    }
+    if (cloudBudget?.length) {
+      const valid = cloudBudget.filter(b => b && b.id && b.description);
+      if (valid.length) { budget = valid; changed = true; }
+    } else if (cloudBudget !== null && budget.length) {
+      await Promise.all(budget.map(b => sbUpsert('budget_items', b)));
+    }
+    if (changed) { saveState(); renderGuests(); if (currentSection==='tasks') renderTasks(); if (currentSection==='budget') renderBudget(); }
+  } catch(e) { console.warn('[sync]', e); }
 })();
 </script>
 
