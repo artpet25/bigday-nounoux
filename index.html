@@ -752,7 +752,7 @@ function updateCountdown() {
   const diffE = Math.ceil((eglise - today) / 86400000);
   const em = document.getElementById('countdown-mairie');
   const ee = document.getElementById('countdown-eglise');
-  if (em) em.innerHTML = diffM > 0 ? `🏛️ J-${diffM}` : diffM === 0 ? `🏛️ Aujourd'hui 🎉` : `🏛️ Mariés ❤️`;
+  if (em) em.innerHTML = diffM > 0 ? `⚜️ J-${diffM}` : diffM === 0 ? `⚜️ Aujourd'hui 🎉` : `⚜️ Mariés ❤️`;
   if (ee) ee.innerHTML = diffE > 0 ? `⛪ J-${diffE}` : diffE === 0 ? `⛪ Aujourd'hui 🎉` : `⛪ Mariés ❤️`;
 }
 updateCountdown();
