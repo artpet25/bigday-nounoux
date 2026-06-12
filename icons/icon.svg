@@ -1,24 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#1a1118"/>
-  <defs>
-    <clipPath id="lf"><rect x="0" y="0" width="53" height="100"/></clipPath>
-    <clipPath id="lb"><rect x="53" y="0" width="47" height="100"/></clipPath>
-  </defs>
-  <ellipse cx="40" cy="53" rx="24" ry="12"
-           stroke="rgba(255,255,255,0.22)" stroke-width="7" fill="none"
-           transform="rotate(-8 40 53)"
-           clip-path="url(#lb)"/>
-  <ellipse cx="60" cy="47" rx="24" ry="12"
-           stroke="white" stroke-width="6.5" fill="none"
-           transform="rotate(8 60 47)"/>
-  <polygon points="60,17 65,25 60,33 55,25"
-           stroke="white" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
-  <line x1="55" y1="25" x2="65" y2="25" stroke="white" stroke-width="1.8"/>
-  <line x1="60" y1="14" x2="60" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="67" y1="17" x2="69" y2="15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="53" y1="17" x2="51" y2="15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <ellipse cx="40" cy="53" rx="24" ry="12"
-           stroke="white" stroke-width="7.5" fill="none"
-           transform="rotate(-8 40 53)"
-           clip-path="url(#lf)"/>
+  <rect width="100" height="100" rx="22" fill="#e91e8c"/>
+  <ellipse cx="50" cy="50" rx="26" ry="13"
+           stroke="white" stroke-width="8" fill="none"/>
 </svg>
