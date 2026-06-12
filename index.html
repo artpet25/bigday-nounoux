@@ -572,10 +572,14 @@ body {
     </div>
     <div class="two-col">
       <div class="field"><label>Catégorie</label>
-        <input id="g-cat" list="g-cat-list" autocomplete="off" placeholder="Amis, Foot…">
-        <datalist id="g-cat-list">
-          <option value="Amis"><option value="Foot"><option value="Collègues"><option value="One Point"><option value="Autre">
-        </datalist>
+        <select id="g-cat">
+          <option value="">—</option>
+          <option value="Amis">Amis</option>
+          <option value="Foot">Foot</option>
+          <option value="Collègues">Collègues</option>
+          <option value="One Point">One Point</option>
+          <option value="Autre">Autre</option>
+        </select>
       </div>
       <div class="field"><label>Statut</label>
         <select id="g-statut">
@@ -818,12 +822,12 @@ function renderGuests() {
       : '';
     const couchageInfo = g.couchage
       ? g.couchage + (g.chambre ? ' #' + g.chambre : '') + (g.nom_gite ? ' — ' + g.nom_gite : '')
-      : '—';
+      : '';
     return `<div class="card" onclick="editGuest('${g.id}')">
       <div class="card-row">
         <div style="flex:1">
           <div class="card-name">${g.prenom}${g.nom ? ' ' + g.nom : ''}</div>
-          <div class="card-sub">Table: ${g.table_num || '—'} · ${couchageInfo}</div>
+          <div class="card-sub">${[g.table_num ? 'Table ' + g.table_num : '', couchageInfo].filter(Boolean).join(' · ')}</div>
         </div>
         <span class="tag tag-${statutClass}">${statutIcon} ${g.statut || '—'}</span>
       </div>
