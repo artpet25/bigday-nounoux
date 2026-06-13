@@ -1356,23 +1356,22 @@ renderGuests(); // renders from localStorage immediately (offline fallback)
       sbFetch('guests'), sbFetch('wedding_tasks'), sbFetch('budget_items')
     ]);
     let changed = false;
-    if (cloudGuests?.length) {
-      const valid = cloudGuests.filter(g => g && g.id && g.prenom);
-      if (valid.length) { guests = valid; changed = true; }
-    } else if (cloudGuests !== null && guests.length) {
-      // Supabase vide → on pousse le local
+    const validGuests = (cloudGuests || []).filter(g => g && g.id && g.prenom);
+    if (validGuests.length > 0) {
+      guests = validGuests; changed = true;
+    } else if (guests.length > 0) {
       await Promise.all(guests.map(g => sbUpsert('guests', g)));
     }
-    if (cloudTasks?.length) {
-      const valid = cloudTasks.filter(t => t && t.id && t.titre);
-      if (valid.length) { tasks = valid; changed = true; }
-    } else if (cloudTasks !== null && tasks.length) {
+    const validTasks = (cloudTasks || []).filter(t => t && t.id && t.titre);
+    if (validTasks.length > 0) {
+      tasks = validTasks; changed = true;
+    } else if (tasks.length > 0) {
       await Promise.all(tasks.map(t => sbUpsert('wedding_tasks', t)));
     }
-    if (cloudBudget?.length) {
-      const valid = cloudBudget.filter(b => b && b.id && b.description);
-      if (valid.length) { budget = valid; changed = true; }
-    } else if (cloudBudget !== null && budget.length) {
+    const validBudget = (cloudBudget || []).filter(b => b && b.id && b.description);
+    if (validBudget.length > 0) {
+      budget = validBudget; changed = true;
+    } else if (budget.length > 0) {
       await Promise.all(budget.map(b => sbUpsert('budget_items', b)));
     }
     if (changed) { saveState(); renderGuests(); if (currentSection==='tasks') renderTasks(); if (currentSection==='budget') renderBudget(); }
